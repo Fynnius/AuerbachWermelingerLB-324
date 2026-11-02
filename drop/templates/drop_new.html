@@ -7,6 +7,15 @@
       <label for="drop-text">Text</label>
       <textarea id="drop-text" rows="10" required></textarea>
     </div>
+    <div class="form-row">
+      <label for="drop-expires-in">Ablaufzeit</label>
+      <select id="drop-expires-in" name="expires_in">
+        <option value="" selected>Nie</option>
+        {% for seconds, label in expiry_choices.items() %}
+          <option value="{{ seconds }}">{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
     <p class="muted">
       Der Text wird in deinem Browser verschlüsselt. Der Server erhält nur
       Datensalat; der Schlüssel steht nur im Link nach dem #.

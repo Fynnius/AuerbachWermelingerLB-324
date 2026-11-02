@@ -76,6 +76,14 @@ def get_text_drop(slug):
     return drop
 
 
+@bp.errorhandler(410)
+def gone(error):
+    """Abgelaufene Drops: JSON für fetch, sonst eine verständliche Seite."""
+    if request.endpoint == "drops.data":
+        return jsonify(error="expired"), 410
+    return render_template("drop_view.html", expired=True), 410
+
+
 @bp.get("/drops/new")
 @login_required
 def new():
