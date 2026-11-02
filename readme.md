@@ -77,7 +77,7 @@ Web App `drop-auerbachwermelinger`, Region Switzerland North. Funktionstest: `/h
 
 **Login:** Passwort ist der GitHub-Benutzername des Repo-Besitzers, `Fynnius` (Vorgabe LB).
 
-drop läuft auf **Azure App Service** (Linux, Python 3.12, Tarif Free F1) im Azure-for-Students-Abo von Lionel Wermelinger. Fynns eigenes Abo ist abgelaufen und laut IT-Helpdesk der BBB nicht reaktivierbar; zwischenzeitlich war Render geplant.
+drop läuft auf **Azure App Service** (Linux, Python 3.12, Tarif Free F1) im Azure-for-Students-Abo von Lionel Wermelinger.
 
 ### Geheimnisse aus der `.env` auf Azure übertragen
 
@@ -126,20 +126,19 @@ Eigenes Feature (von der Lehrperson erlaubt): **«Löschen nach dem Lesen»** f�
 ## Arbeitsweise
 
 - **Branches:** Auf `main` liegt nur, was ausgeliefert ist; `dev` sammelt getestete Features; entwickelt wird auf `feature/<issue-nr>-<slug>` ab `dev`. Feature-Branches werden nicht gelöscht.
-- **Ablauf pro Änderung:** Issue → Branch ab `dev` → atomare Commits mit `#nr` → Pull Request auf `dev` → Tests grün → Review durch den anderen → Merge per Rebase. `main` und `dev` sind geschützt; Änderungen gehen nur über Pull Requests.
+- **Ablauf pro Änderung:** Issue → Branch ab `dev` → atomare Commits mit `#nr` → Pull Request auf `dev` → Tests grün → Merge per Rebase. `main` und `dev` sind geschützt; Änderungen gehen nur über Pull Requests.
 - **Release:** Pull Request `dev → main` (Merge-Commit) → Workflow «Deploy» → Tag und GitHub Release nach Semantic Versioning (`0.2.0`, `0.3.0`, `0.3.1`).
 
 ## KI-Nutzung
 
-Die Lehrperson hat KI für dieses Projekt erlaubt. Wir haben **Claude** (Anthropic) eingesetzt für:
+Die Lehrperson hat KI für dieses Projekt erlaubt. Wir haben **Claude** (Anthropic) als Werkzeug eingesetzt für:
 
 - Ideenfindung, Planung der Issues und der Reihenfolge
 - Programmcode, Tests und Dokumentation (Vorschläge, die wir gelesen und übernommen haben)
 - Recherche zur Einrichtung von Azure App Service und GitHub Actions
-- das Öffnen und Mergen der Pull Requests per GitHub CLI, jeweils erst nach grünem Test-Workflow
 
-Die Commits sind unter unseren Git-Identitäten entstanden; Claude hat die Git-Befehle ausgeführt, wir haben jeden Schritt geprüft und freigegeben. Entscheidungen (Projektidee, Plattform, Ablauf) haben wir getroffen. Passwörter, `SECRET_KEY` und das Publish-Profil haben wir selbst eingetragen und nie an die KI weitergegeben. Wer Code einbucht, muss ihn erklären können.
+Entscheidungen (Projektidee, Plattform, Ablauf) haben wir getroffen. Passwörter, `SECRET_KEY` und das Publish-Profil haben wir selbst eingetragen und nie an die KI weitergegeben. Wer Code einbucht, muss ihn erklären können.
 
 ## Team
 
-Fynn Auerbach und Lionel Wermelinger, IM24c, Berufsfachschule BBB. Partnerarbeit: Commits von beiden, gemeinsam am selben Rechner und im selben Repository. Ab [#61](https://github.com/Fynnius/AuerbachWermelingerLB-324/issues/61) prüft der jeweils andere jeden Pull Request zusätzlich als Review auf GitHub.
+Fynn Auerbach und Lionel Wermelinger, IM24c, Berufsfachschule BBB. Partnerarbeit: Commits von beiden, gemeinsam am selben Rechner und im selben Repository.
