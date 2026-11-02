@@ -1,0 +1,55 @@
+# LB 324, Aufgabe 4: Bei jedem Merge in main testen und danach auf Azure ausliefern.
+# Ein Merge ist auf GitHub ein Push auf main.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Nie zwei Auslieferungen gleichzeitig; eine laufende wird nicht abgebrochen.
+concurrency:
+  group: deploy-azure
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Test with pytest
+        run: python -m pytest
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.webapp-url }}
+    steps:
+      - uses: actions/checkout@v7
+      # Nur App-Code und requirements.txt ausliefern. Die Pakete installiert
+      # Azure selbst (App Setting SCM_DO_BUILD_DURING_DEPLOYMENT=true).
+      - name: Collect app files
+        run: |
+          mkdir package
+          cp -r drop requirements.txt package/
+      - name: Deploy to Azure Web App
+        id: deploy
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: package
