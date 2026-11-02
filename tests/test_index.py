@@ -57,3 +57,22 @@ def test_index_shows_qr_code_for_link(app, client):
 
     # Then: I see its QR code
     assert f'class="qr" src="/{slug}/qr"' in html
+
+
+def test_index_shows_copy_button_for_link(app, client):
+    client.post("/login", data={"password": "test"})
+    client.post("/links", data={"url": "https://example.com"})
+    with app.app_context():
+        slug = db.session.execute(db.select(Link.slug)).scalar_one()
+
+    html = client.get("/").get_data(as_text=True)
+
+    assert f'data-copy="http://localhost/{slug}"' in html
+    assert "/static/copy.js" in html
+
+
+def test_copy_script_is_served(client):
+    response = client.get("/static/copy.js")
+
+    assert response.status_code == 200
+    assert b"navigator.clipboard" in response.data
