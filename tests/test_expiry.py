@@ -262,3 +262,34 @@ def test_drop_with_one_hour_expiry_is_gone_after_two_hours(app, client, path):
     assert response.status_code == 410
     assert CIPHERTEXT.encode() not in response.data
     assert load(app, "Ab3dE9").clicks == 0
+
+
+def test_expired_drop_page_says_so(app, client):
+    add_drop(app, expires_at=utcnow() - timedelta(minutes=1))
+
+    response = client.get("/d/Ab3dE9")
+
+    assert response.status_code == 410
+    html = response.get_data(as_text=True)
+    assert "Dieser Drop ist abgelaufen." in html
+    assert "drop_view.js" not in html
+
+
+def test_expired_drop_data_is_json(app, client):
+    add_drop(app, expires_at=utcnow() - timedelta(minutes=1))
+
+    response = client.get("/d/Ab3dE9/data")
+
+    assert response.status_code == 410
+    assert response.get_json() == {"error": "expired"}
+
+
+def test_new_drop_form_offers_expiry_choices(client):
+    login(client)
+
+    html = client.get("/drops/new").get_data(as_text=True)
+
+    assert 'id="drop-expires-in"' in html
+    for seconds in ("3600", "86400", "604800"):
+        assert f'<option value="{seconds}">' in html
+    assert '<option value="" selected>Nie</option>' in html

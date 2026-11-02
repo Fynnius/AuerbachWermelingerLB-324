@@ -27,6 +27,9 @@ async function loadData(slug) {
   } catch {
     throw new Error("Keine Verbindung zum Server. Bitte lade die Seite neu.");
   }
+  if (response.status === 410) {
+    throw new Error("Dieser Drop ist abgelaufen.");
+  }
   if (response.status === 404) {
     throw new Error("Diesen Drop gibt es nicht (mehr).");
   }

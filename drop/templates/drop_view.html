@@ -2,6 +2,11 @@
 {% block title %}Drop · drop{% endblock %}
 {% block content %}
   <h1>Drop</h1>
+  {% if expired %}
+  <div class="card">
+    <p class="flash flash-error" role="alert">Dieser Drop ist abgelaufen.</p>
+  </div>
+  {% else %}
   <div id="drop" class="card" data-slug="{{ slug }}">
     <p id="drop-status" class="muted" role="status">Drop wird entschlüsselt …</p>
     <p id="drop-error" class="flash flash-error" role="alert" hidden></p>
@@ -12,4 +17,5 @@
   </noscript>
 
   <script type="module" src="{{ url_for('static', filename='drop_view.js') }}"></script>
+  {% endif %}
 {% endblock %}

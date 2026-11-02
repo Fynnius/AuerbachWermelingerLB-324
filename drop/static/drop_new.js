@@ -6,6 +6,7 @@ const GCM_TAG_BYTES = 16;
 
 const form = document.getElementById("drop-form");
 const textarea = document.getElementById("drop-text");
+const expirySelect = document.getElementById("drop-expires-in");
 const submitButton = form.querySelector("button[type=submit]");
 const errorBox = document.getElementById("drop-error");
 const result = document.getElementById("drop-result");
@@ -39,7 +40,12 @@ async function errorMessageFor(response) {
   return `Der Drop konnte nicht gespeichert werden (HTTP ${response.status}).`;
 }
 
-async function createDrop(text) {
+// "" (Nie) wird zu null, sonst die Sekunden als Zahl.
+function selectedExpiresIn() {
+  return expirySelect.value === "" ? null : Number(expirySelect.value);
+}
+
+async function createDrop(text, expiresIn) {
   const key = await generateKey();
   const { ciphertext, iv } = await encrypt(text, key);
 
@@ -48,7 +54,7 @@ async function createDrop(text) {
     response = await fetch("/drops", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ciphertext, iv }),
+      body: JSON.stringify({ ciphertext, iv, expires_in: expiresIn }),
       credentials: "same-origin",
     });
   } catch {
@@ -77,7 +83,7 @@ form.addEventListener("submit", async (event) => {
 
   submitButton.disabled = true;
   try {
-    linkInput.value = await createDrop(text);
+    linkInput.value = await createDrop(text, selectedExpiresIn());
     result.hidden = false;
     textarea.value = "";
     linkInput.focus();
