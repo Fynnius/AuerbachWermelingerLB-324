@@ -1,39 +1,39 @@
 {% extends "base.html" %}
-{% block title %}Neuer Drop · drop{% endblock %}
+{% block title %}Neuer Drop – drop{% endblock %}
 {% block content %}
   <h1>Neuer Drop</h1>
-  <form id="drop-form" class="card">
-    <div class="form-row">
-      <label for="drop-text">Text</label>
-      <textarea id="drop-text" rows="10" required></textarea>
-    </div>
-    <div class="form-row">
-      <label for="drop-expires-in">Ablaufzeit</label>
+  <p class="lede">Dein Browser verschlüsselt den Text, bevor er abgeschickt wird. Der Server bekommt nur Datensalat, der Schlüssel steht allein im Link.</p>
+
+  <form id="drop-form" class="drop-form">
+    <label for="drop-text" class="visually-hidden">Text</label>
+    <textarea id="drop-text" rows="10" required></textarea>
+    <div class="drop-form-actions">
+      <label for="drop-expires-in">Läuft ab</label>
       <select id="drop-expires-in" name="expires_in">
         <option value="" selected>Nie</option>
         {% for seconds, label in expiry_choices.items() %}
           <option value="{{ seconds }}">{{ label }}</option>
         {% endfor %}
       </select>
+      <button type="submit" class="btn">Drop erstellen</button>
     </div>
-    <p class="muted">
-      Der Text wird in deinem Browser verschlüsselt. Der Server erhält nur
-      Datensalat; der Schlüssel steht nur im Link nach dem #.
-    </p>
-    <button type="submit" class="btn">Drop erstellen</button>
   </form>
 
   <p id="drop-error" class="flash flash-error" role="alert" hidden></p>
 
-  <div id="drop-result" class="card" hidden>
-    <p class="flash flash-success">Drop erstellt. Wer diesen Link hat, kann den Text lesen:</p>
-    <div class="form-row">
-      <label for="drop-link">Link</label>
-      <input id="drop-link" type="text" readonly>
+  <section id="drop-result" class="drop-result" hidden aria-labelledby="drop-result-title">
+    <h2 id="drop-result-title">Drop erstellt</h2>
+    <p>Wer diesen Link hat, kann den Text lesen:</p>
+    <p class="anatomy" id="drop-anatomy" aria-hidden="true">
+      <span class="anatomy-server"><code id="drop-anatomy-server"></code><span class="anatomy-note">geht an den Server</span></span><span class="anatomy-key"><code id="drop-anatomy-key"></code><span class="anatomy-note">bleibt in deinem Browser</span></span>
+    </p>
+    <label for="drop-link" class="visually-hidden">Link</label>
+    <input id="drop-link" class="drop-link" type="text" readonly>
+    <div class="drop-result-actions">
+      <button type="button" id="drop-copy" class="btn">Link kopieren</button>
+      <span id="drop-copy-status" class="note" role="status"></span>
     </div>
-    <button type="button" id="drop-copy" class="btn btn-secondary">Link kopieren</button>
-    <span id="drop-copy-status" class="muted" role="status"></span>
-  </div>
+  </section>
 
   <script type="module" src="{{ url_for('static', filename='drop_new.js') }}"></script>
 {% endblock %}
