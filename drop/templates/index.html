@@ -16,6 +16,7 @@
         {% for link in links %}
           {% set short_url = url_for('links.follow', slug=link.slug, _external=True) %}
           <li>
+            <img class="qr" src="{{ url_for('links.qr', slug=link.slug) }}" alt="QR-Code" width="96" height="96" loading="lazy">
             <div class="link-info">
               <a class="short-url" href="{{ short_url }}">{{ short_url }}</a>
               <span class="muted target">{{ link.target }}</span>
