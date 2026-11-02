@@ -29,4 +29,4 @@ body:
     id: umgebung
     attributes:
       label: Umgebung
-      description: Browser, Betriebssystem, lokal oder Render.
+      description: Browser, Betriebssystem, lokal oder Azure.
