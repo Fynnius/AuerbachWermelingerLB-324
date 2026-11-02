@@ -32,6 +32,10 @@ def visits(app):
         return [(visit.link_id, visit.at, visit.device) for visit in rows]
 
 
+def login(client):
+    client.post("/login", data={"password": "test"})
+
+
 def test_two_follows_record_two_visits_with_device(app, client, stored):
     # Given: a short link
     # When: it is opened twice from different devices
@@ -77,3 +81,56 @@ def test_visit_stores_no_ip_or_user_agent():
 )
 def test_device_from_user_agent(ua, device):
     assert device_from_user_agent(ua) == device
+
+
+def test_dashboard_data_lists_two_visits_per_link(app, client, stored):
+    # Given: a link that was opened twice
+    client.get("/abc123", headers={"User-Agent": IPHONE})
+    client.get("/abc123", headers={"User-Agent": DESKTOP})
+    login(client)
+
+    # When: I fetch GET /dashboard/data
+    response = client.get("/dashboard/data")
+
+    # Then: it lists the link with two visits including time and device
+    assert response.status_code == 200
+    entry = next(e for e in response.get_json() if e["slug"] == "abc123")
+    assert entry["kind"] == "url"
+    assert entry["target"] == "https://example.com"
+    assert entry["clicks"] == 2
+    assert [v["device"] for v in entry["visits"]] == ["mobile", "desktop"]
+    assert all(v["at"].endswith("Z") for v in entry["visits"])
+
+
+def test_dashboard_data_lists_newest_first(app, client):
+    with app.app_context():
+        db.session.add(Link(slug="old001", kind="url", target="https://a.example"))
+        db.session.commit()
+        db.session.add(Link(slug="new001", kind="url", target="https://b.example"))
+        db.session.commit()
+    login(client)
+
+    slugs = [e["slug"] for e in client.get("/dashboard/data").get_json()]
+
+    assert slugs == ["new001", "old001"]
+
+
+def test_dashboard_data_hides_drop_contents(client, stored):
+    client.get("/d/Ab3dE9/data")
+    login(client)
+
+    response = client.get("/dashboard/data")
+
+    entry = next(e for e in response.get_json() if e["slug"] == "Ab3dE9")
+    assert entry["kind"] == "text"
+    assert entry["target"] is None
+    assert "ciphertext" not in entry and "iv" not in entry
+    assert CIPHERTEXT.encode() not in response.data
+    assert IV.encode() not in response.data
+
+
+def test_dashboard_data_requires_login(client):
+    response = client.get("/dashboard/data")
+
+    assert response.status_code == 302
+    assert response.headers["Location"] == "/login"
