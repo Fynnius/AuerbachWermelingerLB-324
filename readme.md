@@ -51,7 +51,9 @@ Alle Hooks von Hand ausführen: `pre-commit run --all-files` (commit-Stufe) und 
 
 ### Laufende Applikation
 
-**URL:** `⚠️ URL FOLGT` (Default domain der Azure Web App)
+**URL:** <https://drop-auerbachwermelinger-dtbuh3c7bre2e7a9.switzerlandnorth-01.azurewebsites.net>
+
+Web App `drop-auerbachwermelinger`, Region Switzerland North. Funktionstest: `/health` liefert `{"status":"ok"}`.
 
 drop läuft auf **Azure App Service** (Linux, Python 3.12, Tarif Free F1) im Azure-for-Students-Abo von Lionel Wermelinger. Fynns eigenes Abo ist abgelaufen und laut IT-Helpdesk der BBB nicht reaktivierbar; zwischenzeitlich war Render geplant.
 
