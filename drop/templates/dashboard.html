@@ -1,21 +1,24 @@
 {% extends "base.html" %}
-{% block title %}Dashboard · drop{% endblock %}
+{% block title %}Dashboard – drop{% endblock %}
 {% block content %}
   <h1>Dashboard</h1>
-  <p id="dashboard-status" class="muted" role="status">Lade Statistik …</p>
+  <p class="lede">Wir sehen, dass ein Link geöffnet wurde, aber nie, was in einem Drop steht.</p>
+  <p id="dashboard-status" class="note" role="status">Lade Statistik …</p>
 
-  <section class="card">
-    <h2>Besuche der letzten 7 Tage</h2>
-    <div id="dashboard-chart" class="dashboard-chart"></div>
-  </section>
+  <div class="dash-grid">
+    <section class="dash-panel dash-chart" aria-labelledby="chart-title">
+      <h2 id="chart-title">Besuche der letzten 7 Tage</h2>
+      <div id="dashboard-chart" class="dashboard-chart"></div>
+    </section>
 
-  <section class="card">
-    <h2>Geräte</h2>
-    <ul id="dashboard-devices" class="device-list"></ul>
-  </section>
+    <section class="dash-panel" aria-labelledby="devices-title">
+      <h2 id="devices-title">Geräte</h2>
+      <ul id="dashboard-devices" class="device-list"></ul>
+    </section>
+  </div>
 
-  <section class="card">
-    <h2>Klicks pro Link</h2>
+  <section class="dash-links" aria-labelledby="table-title">
+    <h2 id="table-title">Klicks pro Link</h2>
     <div class="table-wrap">
       <table class="dashboard-table">
         <thead>

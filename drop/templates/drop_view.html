@@ -1,14 +1,16 @@
 {% extends "base.html" %}
-{% block title %}Drop · drop{% endblock %}
+{% block title %}Drop – drop{% endblock %}
 {% block content %}
-  <h1>Drop</h1>
   {% if expired %}
-  <div class="card">
-    <p class="flash flash-error" role="alert">Dieser Drop ist abgelaufen.</p>
+  <div class="envelope is-void">
+    <h1>Dieser Drop ist abgelaufen.</h1>
+    <p>Der Inhalt wurde gelöscht. Bitte die Person, die dir den Link geschickt hat, um einen neuen.</p>
   </div>
   {% else %}
-  <div id="drop" class="card" data-slug="{{ slug }}">
-    <p id="drop-status" class="muted" role="status">Drop wird entschlüsselt …</p>
+  <h1 class="visually-hidden">Drop</h1>
+  <div id="drop" class="envelope is-sealed" data-slug="{{ slug }}">
+    <div class="envelope-tint" aria-hidden="true"></div>
+    <p id="drop-status" class="envelope-status" role="status">Drop wird entschlüsselt …</p>
     <p id="drop-error" class="flash flash-error" role="alert" hidden></p>
     <pre id="drop-text" hidden></pre>
   </div>
