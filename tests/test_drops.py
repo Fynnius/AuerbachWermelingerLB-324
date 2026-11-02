@@ -222,3 +222,10 @@ def test_header_links_to_new_drop_when_logged_in(client):
     login(client)
 
     assert b'href="/drops/new"' in client.get("/").data
+
+
+def test_view_page_decrypts_in_the_browser(client, stored_drop):
+    page = client.get(f"/d/{stored_drop}").data
+
+    assert b'<script type="module" src="/static/drop_view.js">' in page
+    assert b'<pre id="drop-text" hidden></pre>' in page
