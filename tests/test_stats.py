@@ -1,9 +1,10 @@
 import base64
+from datetime import timedelta
 
 import pytest
 
 from drop.database import db
-from drop.models import Link, Visit
+from drop.models import Link, Visit, utcnow
 from drop.stats import device_from_user_agent
 
 IPHONE = (
@@ -57,6 +58,22 @@ def test_drop_data_records_a_visit(app, client, stored):
 def test_qr_does_not_record_a_visit(app, client, stored):
     client.get("/abc123/qr", headers={"User-Agent": DESKTOP})
 
+    assert visits(app) == []
+
+
+@pytest.mark.parametrize("path", ["/abc123", "/d/Ab3dE9/data"])
+def test_expired_link_or_drop_records_no_visit(app, client, stored, path):
+    # Given: an expired short link and an expired drop
+    with app.app_context():
+        for link in db.session.execute(db.select(Link)).scalars():
+            link.expires_at = utcnow() - timedelta(minutes=1)
+        db.session.commit()
+
+    # When: one of them is opened
+    response = client.get(path, headers={"User-Agent": DESKTOP})
+
+    # Then: it is gone and no visit is recorded
+    assert response.status_code == 410
     assert visits(app) == []
 
 
