@@ -4,11 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}drop{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
   <header>
     <a href="{{ url_for('main.index') }}">drop</a>
     {% if session.get('logged_in') %}
+      <a href="{{ url_for('drops.new') }}">Neuer Drop</a>
       <a href="{{ url_for('auth.logout') }}">Logout</a>
     {% endif %}
   </header>
