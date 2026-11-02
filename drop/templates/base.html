@@ -11,6 +11,7 @@
     <a href="{{ url_for('main.index') }}">drop</a>
     {% if session.get('logged_in') %}
       <a href="{{ url_for('drops.new') }}">Neuer Drop</a>
+      <a href="{{ url_for('stats.dashboard') }}">Dashboard</a>
       <a href="{{ url_for('auth.logout') }}">Logout</a>
     {% endif %}
   </header>
