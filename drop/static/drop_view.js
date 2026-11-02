@@ -57,6 +57,7 @@ async function show() {
     output.textContent = text;
     output.hidden = false;
     statusLine.hidden = true;
+    container.classList.replace("is-sealed", "is-open");
   } catch (error) {
     showError(error.message);
   }
