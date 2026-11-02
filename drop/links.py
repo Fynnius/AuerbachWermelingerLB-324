@@ -1,10 +1,13 @@
 """Kurzlinks: erstellen (mit Login) und weiterleiten (öffentlich)."""
 
+import io
 import secrets
 import string
 from urllib.parse import urlparse
 
-from flask import Blueprint, abort, flash, redirect, request, url_for
+import qrcode
+import qrcode.image.svg
+from flask import Blueprint, Response, abort, flash, redirect, request, url_for
 
 from drop.auth import login_required
 from drop.database import db
@@ -65,3 +68,14 @@ def follow(slug):
     link.clicks += 1
     db.session.commit()
     return redirect(link.target, code=302)
+
+
+@bp.get("/<slug>/qr")
+def qr(slug):
+    """QR-Code des absoluten Kurzlinks als SVG (ohne Pillow)."""
+    link = get_url_link_or_404(slug)
+    short_url = url_for("links.follow", slug=link.slug, _external=True)
+    image = qrcode.make(short_url, image_factory=qrcode.image.svg.SvgPathImage)
+    buffer = io.BytesIO()
+    image.save(buffer)
+    return Response(buffer.getvalue(), mimetype="image/svg+xml")
