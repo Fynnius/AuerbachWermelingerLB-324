@@ -41,7 +41,10 @@
       var date = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
       days.push({
         key: dayKey(date),
-        label: date.toLocaleDateString("de-CH", { weekday: "short", day: "numeric" }),
+        // "Mo., 26." wird zu "Mo 26", damit sieben Tage nebeneinander passen
+        label: date
+          .toLocaleDateString("de-CH", { weekday: "short", day: "numeric" })
+          .replace(/[.,]/g, ""),
         count: 0,
       });
     }
@@ -114,8 +117,7 @@
         y: y,
         width: barWidth,
         height: barHeight,
-        rx: 3,
-        class: "bar",
+        class: index === DAYS - 1 ? "bar is-today" : "bar",
       });
       var title = svg("title");
       title.textContent = day.label + ": " + day.count;

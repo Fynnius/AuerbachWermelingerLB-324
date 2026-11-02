@@ -13,6 +13,8 @@ const result = document.getElementById("drop-result");
 const linkInput = document.getElementById("drop-link");
 const copyButton = document.getElementById("drop-copy");
 const copyStatus = document.getElementById("drop-copy-status");
+const anatomyServer = document.getElementById("drop-anatomy-server");
+const anatomyKey = document.getElementById("drop-anatomy-key");
 
 function showError(message) {
   errorBox.textContent = message;
@@ -23,6 +25,14 @@ function clearMessages() {
   errorBox.hidden = true;
   errorBox.textContent = "";
   copyStatus.textContent = "";
+}
+
+// Zeigt den Link zweigeteilt: was an den Server geht und was im Browser bleibt.
+function showAnatomy(link) {
+  const hash = link.indexOf("#");
+  anatomyServer.textContent = link.slice(0, hash);
+  anatomyKey.textContent = link.slice(hash);
+  result.classList.add("has-anatomy");
 }
 
 async function errorMessageFor(response) {
@@ -84,10 +94,10 @@ form.addEventListener("submit", async (event) => {
   submitButton.disabled = true;
   try {
     linkInput.value = await createDrop(text, selectedExpiresIn());
+    showAnatomy(linkInput.value);
     result.hidden = false;
     textarea.value = "";
-    linkInput.focus();
-    linkInput.select();
+    copyButton.focus();
   } catch (error) {
     showError(error.message || "Beim Verschlüsseln ist ein Fehler aufgetreten.");
   } finally {
@@ -100,6 +110,7 @@ copyButton.addEventListener("click", async () => {
     await navigator.clipboard.writeText(linkInput.value);
     copyStatus.textContent = "Link kopiert.";
   } catch {
+    result.classList.remove("has-anatomy");
     linkInput.select();
     copyStatus.textContent = "Kopieren nicht möglich, bitte manuell kopieren (Ctrl/Cmd+C).";
   }
