@@ -1,0 +1,44 @@
+# Hooks für drop (LB 324, Aufgabe 2):
+# - beim commit: Code formatieren (black) und prüfen (flake8 + Basis-Checks)
+# - beim push: alle Tests ausführen (pytest)
+# - bei der Commit-Message: Verweis auf ein Issue (#nr) verlangen (wie LA 1620)
+default_install_hook_types: [pre-commit, pre-push, commit-msg]
+default_stages: [pre-commit]
+
+repos:
+  - repo: https://github.com/psf/black
+    rev: 26.10.1
+    hooks:
+      - id: black
+
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.4.1
+    hooks:
+      - id: flake8
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+      - id: check-case-conflict
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  - repo: local
+    hooks:
+      - id: needs-hash
+        name: commit message needs issue (#nr)
+        language: pygrep
+        entry: '#\d+'
+        args: [--multiline, --negate]
+        stages: [commit-msg]
+
+      - id: pytest
+        name: pytest
+        entry: python -m pytest
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
