@@ -2,7 +2,7 @@
 
 **Team:** Fynn Auerbach, Lionel Wermelinger (IM24c)
 **Modul:** 324 DevOps, Leistungsbeurteilung (Partnerarbeit)
-**Status:** Idee. Die Umsetzung folgt später.
+**Status:** Umgesetzt und auf Azure ausgeliefert (Release 0.3.0), Stand 02.11.2026. Dieses Dokument ist die ursprüngliche Projektidee; was davon umgesetzt ist, steht unter «Umfang». Die Bedienung und die LB-Aufgaben beschreibt die [readme.md](../readme.md).
 
 ## Idee in einem Satz
 
@@ -28,23 +28,23 @@ drop ist ein privater Dienst, den wir selbst auf Azure App Service betreiben: Er
   - Ablaufzeit: 1 Stunde, 1 Tag oder 7 Tage
   - Löschen nach dem ersten Öffnen («burn after reading»)
 
-### Live-Dashboard
-- Pro Link sehen wir, wie oft und wann er geöffnet wurde, über welches Gerät und aus welchem Land, als Zeitverlauf.
-- Das Dashboard aktualisiert sich live ohne Neuladen (Server-Sent Events).
+### Dashboard
+- Pro Link sehen wir, wie oft und wann er geöffnet wurde und über welchen Gerätetyp, als 7-Tage-Verlauf (umgesetzt).
+- Geplant, aber im Backlog: Länder-Statistik und Weltkarte (#31) sowie Live-Updates ohne Neuladen per Server-Sent Events (#29).
 - **Das Dashboard weiss, *dass* etwas geöffnet wurde, aber nie, *was* drin ist.** Diese Trennung zeigen wir in der Präsentation.
 
 ### Zugriff
 - Erstellen und Dashboard sind durch das `PASSWORD` aus der `.env` geschützt (Vorgabe der LB).
 - Öffnen geht ohne Login, nur mit dem Link.
 
-## Technik (geplant)
+## Technik
 
 | Teil | Wahl | Begründung |
 |---|---|---|
 | Backend | Python / Flask | Wie im Modul, damit unsere CI/CD-Vorlagen passen |
 | Datenbank | SQLite unter `/home` auf Azure | `/home` überlebt Neustarts und Auslieferungen; für unseren Umfang reicht SQLite |
 | Verschlüsselung | Web Crypto API im Browser | Keine Bibliothek nötig, der Server sieht nie Klartext |
-| Live-Updates | Server-Sent Events | Einfacher als WebSockets, läuft mit Flask |
+| Live-Updates | Server-Sent Events (Backlog, #29) | Einfacher als WebSockets, läuft mit Flask |
 | QR-Code | Python-Paket `qrcode` | |
 | Tests | pytest | |
 | Formatierung / Linting | black, flake8 via pre-commit | |
@@ -64,17 +64,17 @@ drop ist ein privater Dienst, den wir selbst auf Azure App Service betreiben: Er
 
 ## Umfang
 
-**Erste Version (MVP):**
+**Erste Version (MVP), alles umgesetzt:**
 1. Link kürzen und weiterleiten
 2. Verschlüsselter Text-Drop mit Ablaufzeit
 3. Löschen nach dem Lesen
 4. QR-Code pro Link
 5. Dashboard mit Klickzahlen (zuerst ohne Live-Updates)
 
-**Wenn Zeit bleibt:**
-6. Live-Updates im Dashboard
-7. Datei-Drops
-8. Weltkarte und Geräte-Statistik
+**Wenn Zeit bleibt (nicht umgesetzt, Meilenstein `Backlog`):**
+6. Live-Updates im Dashboard (#29)
+7. Datei-Drops (#30)
+8. Weltkarte (#31); die Geräte-Statistik ist bereits Teil des Dashboards
 
 **Bewusst nicht dabei:** mehrere Benutzerkonten, eigene Domain, mobile App.
 
@@ -100,23 +100,22 @@ Bewertet wird der Umgang mit den CI/CD-Werkzeugen, nicht der Umfang der App. So 
 - `dev`: abgeschlossene und getestete Features.
 - `feature/…`: eine Aufgabe pro Branch, immer ab `dev`.
 
-Ablauf: Issue → `feature/…` ab `dev` → PR auf `dev` (Tests laufen) → Review durch den anderen → zum Ausliefern PR von `dev` auf `main`.
+Ablauf: Issue → `feature/…` ab `dev` → PR auf `dev` (Tests laufen) → Review durch den anderen → zum Ausliefern PR von `dev` auf `main`. Bis Release 0.3.0 haben wir die Pull Requests gemeinsam am selben Rechner angeschaut; ab #61 läuft das Review zusätzlich auf GitHub.
 
 ## Zusammenarbeit
 
-- Ein gemeinsames Repo, beide als Collaborators. `main` und `dev` sind geschützt.
+- Ein gemeinsames Repo: Besitzer `Fynnius`, Collaborator `l-wermelinger`. `main` und `dev` sind geschützt.
 - Jede Aufgabe ist ein Issue mit Assignee. Der andere liest den Diff vor dem Merge.
-- **Aufteilung nach Dateien**, damit es nicht wieder zu Konflikten wie in LA 1632 kommt. Vorschlag:
+- **Aufteilung nach Dateien**, damit es nicht wieder zu Konflikten wie in LA 1632 kommt. Ursprünglicher Vorschlag (tatsächlich haben wir gemeinsam am selben Rechner gearbeitet, siehe unten):
   - Person A: Backend, Datenbank, Verschlüsselungs-Logik, Tests
   - Person B: Frontend, Dashboard, QR-Code, Live-Updates
   - Gemeinsam: pre-commit, Workflows, Azure, readme.md
-- PRs früh als Draft öffnen.
-- KI-Regeln aus unserer Präsentation gelten weiter: Wer KI-Code einbucht, muss ihn erklären können, und Secrets (`.env`, Deploy-Hook-URL) kommen nie in einen Prompt.
+- KI-Regeln aus unserer Präsentation gelten weiter: Wer KI-Code einbucht, muss ihn erklären können, und Secrets (`.env`, `SECRET_KEY`, Publish-Profil) kommen nie in einen Prompt.
 
-## Noch offen
+## Entscheide (früher «Noch offen»)
 
 - [x] Repo-Name: `AuerbachWermelingerLB-324`
-- [ ] Wem gehört das Repo, wer ist Collaborator?
-- [ ] Wer übernimmt Person A, wer Person B?
-- [ ] Name und URL der Azure Web App in readme «Aufgabe 4» eintragen
-- [ ] Welches Feature genau für Kriterium 5-1?
+- [x] Repo-Besitzer `Fynnius`, Collaborator `l-wermelinger`
+- [x] Aufteilung: Wir haben gemeinsam am selben Rechner gearbeitet; Commits von beiden
+- [x] Azure Web App `drop-auerbachwermelinger`, URL in der readme unter «Aufgabe 4»
+- [x] Feature für Kriterium 5-1: «Löschen nach dem Lesen» (#20, PR #58)
