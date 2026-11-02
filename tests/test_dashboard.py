@@ -34,3 +34,11 @@ def test_nav_hides_dashboard_when_logged_out(client):
     response = client.get("/login")
 
     assert b'href="/dashboard"' not in response.data
+
+
+def test_dashboard_loads_script_deferred(client):
+    login(client)
+
+    response = client.get("/dashboard")
+
+    assert b'src="/static/dashboard.js" defer' in response.data

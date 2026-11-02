@@ -2,6 +2,7 @@
 {% block title %}Dashboard · drop{% endblock %}
 {% block content %}
   <h1>Dashboard</h1>
+  <p id="dashboard-status" class="muted" role="status">Lade Statistik …</p>
 
   <section class="card">
     <h2>Besuche der letzten 7 Tage</h2>
@@ -29,4 +30,5 @@
       </table>
     </div>
   </section>
+  <script src="{{ url_for('static', filename='dashboard.js') }}" defer></script>
 {% endblock %}
