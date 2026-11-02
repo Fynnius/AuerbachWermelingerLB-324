@@ -86,6 +86,14 @@ def gone(error):
     return render_template("drop_view.html", expired=True), 410
 
 
+@bp.errorhandler(404)
+def missing(error):
+    """Unbekannte oder bereits gelesene Drops: JSON für fetch, sonst eine Seite."""
+    if request.endpoint == "drops.data":
+        return jsonify(error="not found"), 404
+    return render_template("drop_view.html", missing=True), 404
+
+
 @bp.get("/drops/new")
 @login_required
 def new():
@@ -152,7 +160,9 @@ def create():
 def view(slug):
     drop = get_text_drop(slug)
     abort_if_expired(drop)
-    return render_template("drop_view.html", slug=drop.slug)
+    return render_template(
+        "drop_view.html", slug=drop.slug, burn_after_read=drop.burn_after_read
+    )
 
 
 @bp.get("/d/<slug>/data")

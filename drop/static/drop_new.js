@@ -7,6 +7,8 @@ const GCM_TAG_BYTES = 16;
 const form = document.getElementById("drop-form");
 const textarea = document.getElementById("drop-text");
 const expirySelect = document.getElementById("drop-expires-in");
+const burnBox = document.getElementById("drop-burn");
+const burnNote = document.getElementById("drop-burn-note");
 const submitButton = form.querySelector("button[type=submit]");
 const errorBox = document.getElementById("drop-error");
 const result = document.getElementById("drop-result");
@@ -55,7 +57,7 @@ function selectedExpiresIn() {
   return expirySelect.value === "" ? null : Number(expirySelect.value);
 }
 
-async function createDrop(text, expiresIn) {
+async function createDrop(text, expiresIn, burnAfterRead) {
   const key = await generateKey();
   const { ciphertext, iv } = await encrypt(text, key);
 
@@ -64,7 +66,12 @@ async function createDrop(text, expiresIn) {
     response = await fetch("/drops", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ciphertext, iv, expires_in: expiresIn }),
+      body: JSON.stringify({
+        ciphertext,
+        iv,
+        expires_in: expiresIn,
+        burn_after_read: burnAfterRead,
+      }),
       credentials: "same-origin",
     });
   } catch {
@@ -93,7 +100,8 @@ form.addEventListener("submit", async (event) => {
 
   submitButton.disabled = true;
   try {
-    linkInput.value = await createDrop(text, selectedExpiresIn());
+    linkInput.value = await createDrop(text, selectedExpiresIn(), burnBox.checked);
+    burnNote.hidden = !burnBox.checked;
     showAnatomy(linkInput.value);
     result.hidden = false;
     textarea.value = "";

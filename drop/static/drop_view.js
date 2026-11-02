@@ -5,6 +5,7 @@ const container = document.getElementById("drop");
 const statusLine = document.getElementById("drop-status");
 const errorBox = document.getElementById("drop-error");
 const output = document.getElementById("drop-text");
+const burntNote = document.getElementById("drop-burnt");
 
 function showError(message) {
   statusLine.hidden = true;
@@ -31,7 +32,9 @@ async function loadData(slug) {
     throw new Error("Dieser Drop ist abgelaufen.");
   }
   if (response.status === 404) {
-    throw new Error("Diesen Drop gibt es nicht (mehr).");
+    throw new Error(
+      "Diesen Drop gibt es nicht (mehr). Einmal-Drops sind nach dem ersten Öffnen gelöscht.",
+    );
   }
   if (!response.ok) {
     throw new Error(`Der Drop konnte nicht geladen werden (HTTP ${response.status}).`);
@@ -56,6 +59,7 @@ async function show() {
     }
     output.textContent = text;
     output.hidden = false;
+    burntNote.hidden = container.dataset.burn !== "true";
     statusLine.hidden = true;
     container.classList.replace("is-sealed", "is-open");
   } catch (error) {
