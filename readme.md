@@ -3,6 +3,15 @@
 Privater Dienst für Kurzlinks und im Browser verschlüsselte Text-Drops. LB 324 (DevOps) von Fynn Auerbach und Lionel Wermelinger, IM24c.
 
 - Idee und Spezifikation: [docs/README.md](docs/README.md)
+- Laufende App: <https://drop-auerbachwermelinger-dtbuh3c7bre2e7a9.switzerlandnorth-01.azurewebsites.net>
+
+## Funktionen
+
+- **Kurzlinks** mit QR-Code und Kopier-Knopf
+- **Verschlüsselte Text-Drops:** Der Browser verschlüsselt mit AES-GCM, der Schlüssel steht nur im `#`-Teil des Links. Der Server speichert nie Klartext.
+- **Ablaufzeit** (1 Stunde, 1 Tag, 7 Tage) und **Löschen nach dem ersten Lesen**
+- **Dashboard** mit Klicks pro Link, 7-Tage-Verlauf und Gerätetypen (ohne IP-Adressen)
+- Login mit einem Passwort aus der Umgebung (`PASSWORD`)
 
 ## Lokal starten
 
@@ -14,6 +23,12 @@ flask --app drop run          # http://127.0.0.1:5000
 ```
 
 Produktiv (Azure App Service): `gunicorn --bind=0.0.0.0 --timeout 600 "drop:create_app()"`.
+
+## Aufgabe 1
+
+Neue Anforderungen werden über die Issue-Vorlage **«Anforderung»** (`.github/ISSUE_TEMPLATE/anforderung.yml`) erfasst. Sie fragt das Format der LB ab: **Zielsystem + Priorität (muss/soll/wird) + Systemaktivität + Ergänzungen + Funktionalität + Bedingungen** (zeitlich mit «wenn», logisch mit «falls»), dazu Akzeptanzkriterien als Given/When/Then, die später zu Testfällen werden. Fehler meldet man mit der Vorlage **«Bug»**.
+
+Den Typ setzt man **manuell** als Label: `Funktionale Anforderung`, `Qualitätsanforderung` oder `Randanforderung`. Dazu kommen die Status-Labels aus LA 1611 (`status: new issue`, `status: in progress`, `status: backlog`) und die Meilensteine `0.1.0`, `0.2.0`, `0.3.0` (Semantic Versioning).
 
 ## Aufgabe 2
 
@@ -46,6 +61,10 @@ Vor dem Arbeiten immer zuerst die virtuelle Umgebung aktivieren (`source .venv/b
 Alle Hooks von Hand ausführen: `pre-commit run --all-files` (commit-Stufe) und `pre-commit run --hook-stage pre-push` (Tests).
 
 `git commit --no-verify` bzw. `git push --no-verify` ist in diesem Projekt nicht erlaubt. Weil sich lokale Hooks so umgehen lassen (LA 1640), laufen die Tests zusätzlich auf GitHub bei jedem Pull Request auf `dev`.
+
+## Aufgabe 3
+
+`.github/workflows/tests.yml` führt bei **jedem Pull Request auf `dev`** pytest aus und löst sonst nichts aus (kein Push-Trigger, kein Lint, keine weiteren Jobs). Das Ergebnis erscheint als Check «test» im Pull Request. So ist auch dann sichergestellt, dass nur getesteter Code auf `dev` kommt, wenn jemand die lokalen Hooks umgeht.
 
 ## Aufgabe 4
 
@@ -90,4 +109,34 @@ Die Werte stehen nirgends im Repository. HTTPS endet bei Azure am Load Balancer;
    - Reiter **Variables** → **New repository variable**: `AZURE_WEBAPP_NAME` = Name der Web App.
 3. Die heruntergeladene Datei löschen (sie ist ein Zugangsschlüssel).
 
-Branches: Auf `main` liegt nur, was ausgeliefert ist; `dev` sammelt getestete Features (Tests bei jedem PR auf `dev`, `.github/workflows/tests.yml`); entwickelt wird auf `feature/<nr>-<slug>` ab `dev`.
+## Aufgabe 5
+
+Eigenes Feature (von der Lehrperson erlaubt): **«Löschen nach dem Lesen»** für Drops, umgesetzt nach GitHub Flow:
+
+1. Issue [#20](https://github.com/Fynnius/AuerbachWermelingerLB-324/issues/20) im LB-Format, Label `Funktionale Anforderung`
+2. Branch `feature/20-burn-after-read` direkt aus dem Issue erstellt (`gh issue develop 20 --base dev`)
+3. Commits: zuerst der Test (`tests/test_burn.py`), dann Backend, dann Oberfläche
+4. Pull Request [#58](https://github.com/Fynnius/AuerbachWermelingerLB-324/pull/58) auf `dev` mit Beschreibung und Testnachweis; der Workflow «Tests» lief grün
+5. Merge per Rebase; **der Branch `feature/20-burn-after-read` bleibt bestehen**
+6. Auslieferung auf Azure mit dem nächsten Release `dev → main`
+
+## Arbeitsweise
+
+- **Branches:** Auf `main` liegt nur, was ausgeliefert ist; `dev` sammelt getestete Features; entwickelt wird auf `feature/<issue-nr>-<slug>` ab `dev`. Feature-Branches werden nicht gelöscht.
+- **Ablauf pro Änderung:** Issue → Branch ab `dev` → atomare Commits mit `#nr` → Pull Request auf `dev` → Tests grün → Merge per Rebase. `main` und `dev` sind geschützt; Änderungen gehen nur über Pull Requests.
+- **Release:** Pull Request `dev → main` (Merge-Commit) → Workflow «Deploy» → Tag nach Semantic Versioning (`0.2.0`, `0.3.0`).
+
+## KI-Nutzung
+
+Die Lehrperson hat KI für dieses Projekt erlaubt. Wir haben **Claude** (Anthropic) eingesetzt für:
+
+- Ideenfindung, Planung der Issues und der Reihenfolge
+- Programmcode, Tests und Dokumentation (Vorschläge, die wir gelesen und übernommen haben)
+- Recherche zur Einrichtung von Azure App Service und GitHub Actions
+- das Öffnen und Mergen der Pull Requests per GitHub CLI, jeweils erst nach grünem Test-Workflow
+
+Die Commits sind unter unseren Git-Identitäten entstanden; Claude hat die Git-Befehle ausgeführt, wir haben jeden Schritt geprüft und freigegeben. Entscheidungen (Projektidee, Plattform, Ablauf) haben wir getroffen. Passwörter, `SECRET_KEY` und das Publish-Profil haben wir selbst eingetragen und nie an die KI weitergegeben. Wer Code einbucht, muss ihn erklären können.
+
+## Team
+
+Fynn Auerbach und Lionel Wermelinger, IM24c, Berufsfachschule BBB. Partnerarbeit: Commits von beiden, gemeinsam am selben Rechner und im selben Repository.
