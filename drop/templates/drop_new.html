@@ -15,6 +15,7 @@
           <option value="{{ seconds }}">{{ label }}</option>
         {% endfor %}
       </select>
+      <label for="drop-burn"><input type="checkbox" id="drop-burn"> Nach dem ersten Lesen löschen</label>
       <button type="submit" class="btn">Drop erstellen</button>
     </div>
   </form>
@@ -24,6 +25,7 @@
   <section id="drop-result" class="drop-result" hidden aria-labelledby="drop-result-title">
     <h2 id="drop-result-title">Drop erstellt</h2>
     <p>Wer diesen Link hat, kann den Text lesen:</p>
+    <p id="drop-burn-note" class="note" hidden>Einmal-Link: Der Text wird gelöscht, sobald jemand den Link öffnet. Öffne ihn nicht selbst zum Testen.</p>
     <p class="anatomy" id="drop-anatomy" aria-hidden="true">
       <span class="anatomy-server"><code id="drop-anatomy-server"></code><span class="anatomy-note">geht an den Server</span></span><span class="anatomy-key"><code id="drop-anatomy-key"></code><span class="anatomy-note">bleibt in deinem Browser</span></span>
     </p>

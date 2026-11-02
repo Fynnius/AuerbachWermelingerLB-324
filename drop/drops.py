@@ -32,7 +32,7 @@ SLUG_ALPHABET = string.ascii_letters + string.digits
 SLUG_LENGTH = 6
 IV_BYTES = 12
 MAX_CIPHERTEXT_BYTES = 64 * 1024
-ALLOWED_FIELDS = {"ciphertext", "iv", "expires_in"}
+ALLOWED_FIELDS = {"ciphertext", "iv", "expires_in", "burn_after_read"}
 
 
 def login_required_json(view):
@@ -69,10 +69,11 @@ def new_slug():
 
 
 def get_text_drop(slug):
+    """Lädt einen Drop. Bereits gelesene Burn-after-read-Drops gelten als weg."""
     drop = db.session.execute(
         db.select(Link).filter_by(slug=slug, kind="text")
     ).scalar_one_or_none()
-    if drop is None:
+    if drop is None or drop.ciphertext is None:
         abort(404)
     return drop
 
@@ -83,6 +84,14 @@ def gone(error):
     if request.endpoint == "drops.data":
         return jsonify(error="expired"), 410
     return render_template("drop_view.html", expired=True), 410
+
+
+@bp.errorhandler(404)
+def missing(error):
+    """Unbekannte oder bereits gelesene Drops: JSON für fetch, sonst eine Seite."""
+    if request.endpoint == "drops.data":
+        return jsonify(error="not found"), 404
+    return render_template("drop_view.html", missing=True), 404
 
 
 @bp.get("/drops/new")
@@ -125,12 +134,17 @@ def create():
     except ValueError:
         return bad_request("expires_in must be 3600, 86400, 604800 or null")
 
+    burn_after_read = data.get("burn_after_read", False)
+    if not isinstance(burn_after_read, bool):
+        return bad_request("burn_after_read must be true or false")
+
     drop = Link(
         slug=new_slug(),
         kind="text",
         ciphertext=ciphertext,
         iv=data["iv"],
         expires_at=expires_at_from(expires_in),
+        burn_after_read=burn_after_read,
     )
     db.session.add(drop)
     db.session.commit()
@@ -146,7 +160,9 @@ def create():
 def view(slug):
     drop = get_text_drop(slug)
     abort_if_expired(drop)
-    return render_template("drop_view.html", slug=drop.slug)
+    return render_template(
+        "drop_view.html", slug=drop.slug, burn_after_read=drop.burn_after_read
+    )
 
 
 @bp.get("/d/<slug>/data")
@@ -155,5 +171,10 @@ def data(slug):
     abort_if_expired(drop)
     record_visit(drop)
     drop.clicks += 1
+    payload = {"ciphertext": drop.ciphertext, "iv": drop.iv}
+    if drop.burn_after_read:
+        # Inhalt sofort löschen; der Eintrag bleibt für die Klickstatistik.
+        drop.ciphertext = None
+        drop.iv = None
     db.session.commit()
-    return jsonify(ciphertext=drop.ciphertext, iv=drop.iv)
+    return jsonify(payload)
