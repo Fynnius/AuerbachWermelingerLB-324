@@ -1,11 +1,39 @@
 """Kurzlinks: erstellen (mit Login) und weiterleiten (öffentlich)."""
 
-from flask import Blueprint, abort, redirect
+import secrets
+import string
+from urllib.parse import urlparse
 
+from flask import Blueprint, abort, flash, redirect, request, url_for
+
+from drop.auth import login_required
 from drop.database import db
 from drop.models import Link
 
 bp = Blueprint("links", __name__)
+
+SLUG_ALPHABET = string.ascii_letters + string.digits
+SLUG_LENGTH = 6
+
+
+def is_valid_url(url):
+    """Nur http(s)-URLs mit Host, damit z. B. `javascript:` nicht durchkommt."""
+    parsed = urlparse(url)
+    return parsed.scheme in ("http", "https") and bool(parsed.netloc)
+
+
+def slug_exists(slug):
+    return (
+        db.session.execute(db.select(Link.id).filter_by(slug=slug)).first() is not None
+    )
+
+
+def new_slug():
+    """Würfelt einen zufälligen Slug, bis er noch nicht vergeben ist."""
+    while True:
+        slug = "".join(secrets.choice(SLUG_ALPHABET) for _ in range(SLUG_LENGTH))
+        if not slug_exists(slug):
+            return slug
 
 
 def get_url_link_or_404(slug):
@@ -13,6 +41,22 @@ def get_url_link_or_404(slug):
     if link is None or link.kind != "url":
         abort(404)
     return link
+
+
+@bp.post("/links")
+@login_required
+def create():
+    url = request.form.get("url", "").strip()
+    if not is_valid_url(url):
+        flash("Bitte eine gültige http(s)-URL eingeben.", "error")
+        return redirect(url_for("main.index"))
+
+    link = Link(kind="url", target=url, slug=new_slug())
+    db.session.add(link)
+    db.session.commit()
+    short_url = url_for("links.follow", slug=link.slug, _external=True)
+    flash(f"Kurzlink erstellt: {short_url}", "success")
+    return redirect(url_for("main.index"))
 
 
 @bp.get("/<slug>")
