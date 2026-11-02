@@ -3,13 +3,14 @@ from datetime import datetime, timedelta
 import pytest
 from werkzeug.exceptions import Gone
 
+from drop.database import db
 from drop.expiry import (
     EXPIRY_CHOICES,
     abort_if_expired,
     expires_at_from,
     parse_expires_in,
 )
-from drop.models import Link
+from drop.models import Link, utcnow
 
 NOW = datetime(2026, 1, 1, 12, 0, 0)
 
@@ -47,3 +48,146 @@ def test_abort_if_expired_raises_410_only_after_expiry():
 
     with pytest.raises(Gone):
         abort_if_expired(Link(slug="c", kind="url", expires_at=datetime(2000, 1, 1)))
+
+
+# --- Hilfen für Tests mit gesteuerter Zeit ---------------------------------
+
+
+def login(client):
+    client.post("/login", data={"password": "test"})
+
+
+def add_link(app, slug="abc123", kind="url", expires_at=None, **fields):
+    with app.app_context():
+        db.session.add(Link(slug=slug, kind=kind, expires_at=expires_at, **fields))
+        db.session.commit()
+    return slug
+
+
+def load(app, slug):
+    with app.app_context():
+        return db.session.execute(db.select(Link).filter_by(slug=slug)).scalar_one()
+
+
+def only_link(app):
+    with app.app_context():
+        return db.session.execute(db.select(Link)).scalar_one()
+
+
+def set_expires_at(app, slug, expires_at):
+    """Verschiebt den Ablauf direkt in der DB, statt zu warten."""
+    with app.app_context():
+        link = db.session.execute(db.select(Link).filter_by(slug=slug)).scalar_one()
+        link.expires_at = expires_at
+        db.session.commit()
+
+
+# --- Kurzlinks ---------------------------------------------------------------
+
+
+@pytest.mark.parametrize("seconds", [3600, 86400, 604800])
+def test_create_link_with_expiry_sets_expires_at(app, client, seconds):
+    # Given: I am logged in
+    login(client)
+    before = utcnow()
+
+    # When: I shorten a URL with an expiry
+    client.post(
+        "/links", data={"url": "https://example.com", "expires_in": str(seconds)}
+    )
+
+    # Then: expires_at lies that many seconds in the future
+    link = only_link(app)
+    assert before + timedelta(seconds=seconds) <= link.expires_at
+    assert link.expires_at <= utcnow() + timedelta(seconds=seconds)
+
+
+def test_create_link_without_expiry_never_expires(app, client):
+    login(client)
+
+    client.post("/links", data={"url": "https://example.com", "expires_in": ""})
+
+    assert only_link(app).expires_at is None
+
+
+def test_create_link_rejects_invalid_expiry(app, client):
+    login(client)
+
+    response = client.post(
+        "/links",
+        data={"url": "https://example.com", "expires_in": "60"},
+        follow_redirects=True,
+    )
+
+    assert b"flash-error" in response.data
+    with app.app_context():
+        assert db.session.execute(db.select(Link)).first() is None
+
+
+def test_link_works_before_expiry(app, client):
+    add_link(
+        app,
+        target="https://example.com",
+        expires_at=utcnow() + timedelta(hours=1),
+    )
+
+    assert client.get("/abc123").status_code == 302
+    assert client.get("/abc123/qr").status_code == 200
+
+
+@pytest.mark.parametrize("path", ["/abc123", "/abc123/qr"])
+def test_expired_link_is_gone_and_counts_no_click(app, client, path):
+    # Given: a link with 1 hour expiry, created 2 hours ago
+    add_link(
+        app,
+        target="https://example.com",
+        created_at=utcnow() - timedelta(hours=2),
+        expires_at=utcnow() - timedelta(hours=1),
+    )
+
+    # When: I open it now
+    response = client.get(path)
+
+    # Then: 410 Gone, no redirect, no click
+    assert response.status_code == 410
+    assert "Location" not in response.headers
+    assert load(app, "abc123").clicks == 0
+
+
+def test_link_expires_while_in_use(app, client):
+    add_link(
+        app, target="https://example.com", expires_at=utcnow() + timedelta(hours=1)
+    )
+    assert client.get("/abc123").status_code == 302
+
+    set_expires_at(app, "abc123", utcnow() - timedelta(seconds=1))
+
+    assert client.get("/abc123").status_code == 410
+    assert load(app, "abc123").clicks == 1
+
+
+def test_index_shows_expiry_state(app, client):
+    add_link(app, slug="never1", target="https://example.com/never")
+    add_link(
+        app,
+        slug="later1",
+        target="https://example.com/later",
+        expires_at=datetime(2999, 1, 2, 3, 4),
+    )
+    add_link(
+        app,
+        slug="gone01",
+        target="https://example.com/gone",
+        expires_at=utcnow() - timedelta(minutes=1),
+    )
+    login(client)
+
+    html = client.get("/").get_data(as_text=True)
+
+    assert 'name="expires_in"' in html
+    assert "läuft ab: 02.01.2999 03:04 UTC" in html
+    assert "abgelaufen" in html
+    assert html.count('class="muted expiry"') == 2
+    # Kein QR-Bild für abgelaufene Links (die Route antwortet mit 410)
+    assert "/gone01/qr" not in html
+    assert "/later1/qr" in html

@@ -11,6 +11,12 @@ from flask import Blueprint, Response, abort, flash, redirect, request, url_for
 
 from drop.auth import login_required
 from drop.database import db
+from drop.expiry import (
+    EXPIRY_CHOICES,
+    abort_if_expired,
+    expires_at_from,
+    parse_expires_in,
+)
 from drop.models import Link
 
 bp = Blueprint("links", __name__)
@@ -39,6 +45,12 @@ def new_slug():
             return slug
 
 
+@bp.app_context_processor
+def inject_expiry_choices():
+    """Ablaufzeiten für die Auswahl in allen Formularen (Links und Drops)."""
+    return {"expiry_choices": EXPIRY_CHOICES}
+
+
 def get_url_link_or_404(slug):
     link = db.session.execute(db.select(Link).filter_by(slug=slug)).scalar_one_or_none()
     if link is None or link.kind != "url":
@@ -53,8 +65,18 @@ def create():
     if not is_valid_url(url):
         flash("Bitte eine gültige http(s)-URL eingeben.", "error")
         return redirect(url_for("main.index"))
+    try:
+        expires_in = parse_expires_in(request.form.get("expires_in"))
+    except ValueError:
+        flash("Bitte eine gültige Ablaufzeit wählen.", "error")
+        return redirect(url_for("main.index"))
 
-    link = Link(kind="url", target=url, slug=new_slug())
+    link = Link(
+        kind="url",
+        target=url,
+        slug=new_slug(),
+        expires_at=expires_at_from(expires_in),
+    )
     db.session.add(link)
     db.session.commit()
     short_url = url_for("links.follow", slug=link.slug, _external=True)
@@ -65,6 +87,7 @@ def create():
 @bp.get("/<slug>")
 def follow(slug):
     link = get_url_link_or_404(slug)
+    abort_if_expired(link)
     link.clicks += 1
     db.session.commit()
     return redirect(link.target, code=302)
@@ -74,6 +97,7 @@ def follow(slug):
 def qr(slug):
     """QR-Code des absoluten Kurzlinks als SVG (ohne Pillow)."""
     link = get_url_link_or_404(slug)
+    abort_if_expired(link)
     short_url = url_for("links.follow", slug=link.slug, _external=True)
     image = qrcode.make(short_url, image_factory=qrcode.image.svg.SvgPathImage)
     buffer = io.BytesIO()

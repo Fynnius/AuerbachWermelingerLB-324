@@ -5,6 +5,13 @@
     <form method="post" action="{{ url_for('links.create') }}" class="form-row">
       <label for="url" class="visually-hidden">URL</label>
       <input type="url" id="url" name="url" placeholder="https://example.com" required autofocus>
+      <label for="expires_in" class="visually-hidden">Ablaufzeit</label>
+      <select id="expires_in" name="expires_in" title="Ablaufzeit">
+        <option value="" selected>Ablauf: Nie</option>
+        {% for seconds, label in expiry_choices.items() %}
+          <option value="{{ seconds }}">Ablauf: {{ label }}</option>
+        {% endfor %}
+      </select>
       <button type="submit" class="btn">Kürzen</button>
     </form>
   </section>
@@ -15,11 +22,19 @@
       <ul class="link-list">
         {% for link in links %}
           {% set short_url = url_for('links.follow', slug=link.slug, _external=True) %}
+          {% set expired = link.is_expired() %}
           <li>
-            <img class="qr" src="{{ url_for('links.qr', slug=link.slug) }}" alt="QR-Code" width="96" height="96" loading="lazy">
+            {% if not expired %}
+              <img class="qr" src="{{ url_for('links.qr', slug=link.slug) }}" alt="QR-Code" width="96" height="96" loading="lazy">
+            {% endif %}
             <div class="link-info">
               <a class="short-url" href="{{ short_url }}">{{ short_url }}</a>
               <span class="muted target">{{ link.target }}</span>
+              {% if expired %}
+                <span class="muted expiry">abgelaufen</span>
+              {% elif link.expires_at %}
+                <span class="muted expiry">läuft ab: {{ link.expires_at.strftime("%d.%m.%Y %H:%M") }} UTC</span>
+              {% endif %}
             </div>
             <button type="button" class="btn btn-secondary" data-copy="{{ short_url }}">Kopieren</button>
             <span class="clicks">{{ link.clicks }} {{ "Klick" if link.clicks == 1 else "Klicks" }}</span>
