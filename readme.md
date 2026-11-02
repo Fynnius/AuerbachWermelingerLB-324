@@ -4,6 +4,17 @@ Privater Dienst für Kurzlinks und im Browser verschlüsselte Text-Drops. LB 324
 
 - Idee und Spezifikation: [docs/README.md](docs/README.md)
 
+## Lokal starten
+
+```bash
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env          # danach PASSWORD und SECRET_KEY in .env setzen
+flask --app drop run          # http://127.0.0.1:5000
+```
+
+Produktiv (Render): `gunicorn "drop:create_app()"`.
+
 ## Aufgabe 2
 
 ### pre-commit installieren
