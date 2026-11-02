@@ -25,12 +25,10 @@ def create_app(config=None):
     with app.app_context():
         db.create_all()
 
-    from drop import auth, main
+    from drop import auth, drops, links, main
 
     app.register_blueprint(auth.bp)
     app.register_blueprint(main.bp)
-
-    from drop.links import bp as links_bp
-
-    app.register_blueprint(links_bp)
+    app.register_blueprint(links.bp)
+    app.register_blueprint(drops.bp)
     return app
