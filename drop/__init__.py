@@ -29,4 +29,8 @@ def create_app(config=None):
 
     app.register_blueprint(auth.bp)
     app.register_blueprint(main.bp)
+
+    from drop.links import bp as links_bp
+
+    app.register_blueprint(links_bp)
     return app
