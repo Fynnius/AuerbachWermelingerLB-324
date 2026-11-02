@@ -13,9 +13,17 @@ def create_app(config=None):
     app.config.from_mapping(
         SECRET_KEY=os.getenv("SECRET_KEY") or os.urandom(24),
         PASSWORD=os.getenv("PASSWORD"),
+        SQLALCHEMY_DATABASE_URI=os.getenv("DATABASE_URL", "sqlite:///drop.db"),
     )
     if config:
         app.config.update(config)
+
+    from drop import models  # noqa: F401  (registriert die Tabellen)
+    from drop.database import db
+
+    db.init_app(app)
+    with app.app_context():
+        db.create_all()
 
     from drop import auth, main
 
