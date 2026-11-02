@@ -203,3 +203,22 @@ def test_new_page_is_shown_when_logged_in(client):
     login(client)
 
     assert client.get("/drops/new").status_code == 200
+
+
+def test_new_page_encrypts_in_the_browser(client):
+    login(client)
+
+    page = client.get("/drops/new").data
+
+    assert b'<script type="module" src="/static/drop_new.js">' in page
+    assert "Drop erstellen".encode() in page
+    # The textarea has no name, so the plain text can never be submitted as a form.
+    assert b'<textarea id="drop-text" rows="10" required>' in page
+
+
+def test_header_links_to_new_drop_when_logged_in(client):
+    assert b'href="/drops/new"' not in client.get("/login").data
+
+    login(client)
+
+    assert b'href="/drops/new"' in client.get("/").data

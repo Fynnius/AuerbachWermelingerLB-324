@@ -2,4 +2,29 @@
 {% block title %}Neuer Drop · drop{% endblock %}
 {% block content %}
   <h1>Neuer Drop</h1>
+  <form id="drop-form" class="card">
+    <div class="form-row">
+      <label for="drop-text">Text</label>
+      <textarea id="drop-text" rows="10" required></textarea>
+    </div>
+    <p class="muted">
+      Der Text wird in deinem Browser verschlüsselt. Der Server erhält nur
+      Datensalat; der Schlüssel steht nur im Link nach dem #.
+    </p>
+    <button type="submit" class="btn">Drop erstellen</button>
+  </form>
+
+  <p id="drop-error" class="flash flash-error" role="alert" hidden></p>
+
+  <div id="drop-result" class="card" hidden>
+    <p class="flash flash-success">Drop erstellt. Wer diesen Link hat, kann den Text lesen:</p>
+    <div class="form-row">
+      <label for="drop-link">Link</label>
+      <input id="drop-link" type="text" readonly>
+    </div>
+    <button type="button" id="drop-copy" class="btn btn-secondary">Link kopieren</button>
+    <span id="drop-copy-status" class="muted" role="status"></span>
+  </div>
+
+  <script type="module" src="{{ url_for('static', filename='drop_new.js') }}"></script>
 {% endblock %}
