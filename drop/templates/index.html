@@ -1,5 +1,31 @@
 {% extends "base.html" %}
 {% block content %}
-  <h1>drop</h1>
-  <p>Eingeloggt.</p>
+  <section class="card">
+    <h1>Link kürzen</h1>
+    <form method="post" action="{{ url_for('links.create') }}" class="form-row">
+      <label for="url" class="visually-hidden">URL</label>
+      <input type="url" id="url" name="url" placeholder="https://example.com" required autofocus>
+      <button type="submit" class="btn">Kürzen</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Meine Links</h2>
+    {% if links %}
+      <ul class="link-list">
+        {% for link in links %}
+          {% set short_url = url_for('links.follow', slug=link.slug, _external=True) %}
+          <li>
+            <div class="link-info">
+              <a class="short-url" href="{{ short_url }}">{{ short_url }}</a>
+              <span class="muted target">{{ link.target }}</span>
+            </div>
+            <span class="clicks">{{ link.clicks }} {{ "Klick" if link.clicks == 1 else "Klicks" }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">Noch keine Links.</p>
+    {% endif %}
+  </section>
 {% endblock %}
