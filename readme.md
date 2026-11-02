@@ -16,7 +16,8 @@ Privater Dienst für Kurzlinks und im Browser verschlüsselte Text-Drops. LB 324
 ## Lokal starten
 
 ```bash
-source .venv/bin/activate
+python3 -m venv .venv
+source .venv/bin/activate     # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env          # danach PASSWORD und SECRET_KEY in .env setzen
 flask --app drop run          # http://127.0.0.1:5000
@@ -28,7 +29,7 @@ Produktiv (Azure App Service): `gunicorn --bind=0.0.0.0 --timeout 600 "drop:crea
 
 Neue Anforderungen werden über die Issue-Vorlage **«Anforderung»** (`.github/ISSUE_TEMPLATE/anforderung.yml`) erfasst. Sie fragt das Format der LB ab: **Zielsystem + Priorität (muss/soll/wird) + Systemaktivität + Ergänzungen + Funktionalität + Bedingungen** (zeitlich mit «wenn», logisch mit «falls»), dazu Akzeptanzkriterien als Given/When/Then, die später zu Testfällen werden. Fehler meldet man mit der Vorlage **«Bug»**.
 
-Den Typ setzt man **manuell** als Label: `Funktionale Anforderung`, `Qualitätsanforderung` oder `Randanforderung`. Dazu kommen die Status-Labels aus LA 1611 (`status: new issue`, `status: in progress`, `status: backlog`) und die Meilensteine `0.1.0`, `0.2.0`, `0.3.0` (Semantic Versioning).
+Den Typ setzt man **manuell** als Label: `Funktionale Anforderung`, `Qualitätsanforderung` oder `Randanforderung`. Dazu kommen die Status-Labels aus LA 1611, die wir von Hand pflegen: neu erfasst `status: new issue`, in Arbeit `status: in progress`, zurückgestellt `status: backlog`; geschlossene Issues tragen kein Status-Label mehr. Jedes Issue hängt an einem Meilenstein nach Semantic Versioning (`0.1.0`, `0.2.0`, `0.3.0`, `0.3.1`) oder an `Backlog` für spätere Ideen.
 
 ## Aufgabe 2
 
@@ -74,6 +75,8 @@ Alle Hooks von Hand ausführen: `pre-commit run --all-files` (commit-Stufe) und 
 
 Web App `drop-auerbachwermelinger`, Region Switzerland North. Funktionstest: `/health` liefert `{"status":"ok"}`.
 
+**Login:** Passwort ist der GitHub-Benutzername des Repo-Besitzers, `Fynnius` (Vorgabe LB).
+
 drop läuft auf **Azure App Service** (Linux, Python 3.12, Tarif Free F1) im Azure-for-Students-Abo von Lionel Wermelinger. Fynns eigenes Abo ist abgelaufen und laut IT-Helpdesk der BBB nicht reaktivierbar; zwischenzeitlich war Render geplant.
 
 ### Geheimnisse aus der `.env` auf Azure übertragen
@@ -85,7 +88,7 @@ Lokal stehen `PASSWORD` und `SECRET_KEY` in der `.env` (wird nie eingebucht, sie
 
    | Name | Wert |
    |---|---|
-   | `PASSWORD` | GitHub-Benutzername (Vorgabe LB), **nicht** der Wert aus der lokalen `.env` |
+   | `PASSWORD` | `Fynnius`, der GitHub-Benutzername des Repo-Besitzers (Vorgabe LB), **nicht** der Wert aus der lokalen `.env` |
    | `SECRET_KEY` | langer Zufallswert, erzeugt mit `python3 -c "import secrets; print(secrets.token_hex(32))"` |
    | `DATABASE_URL` | `sqlite:////home/drop.db` (nur `/home` überlebt Neustarts und Deployments) |
    | `SCM_DO_BUILD_DURING_DEPLOYMENT` | `true` (Azure installiert `requirements.txt` beim Deploy) |
@@ -95,7 +98,7 @@ Lokal stehen `PASSWORD` und `SECRET_KEY` in der `.env` (wird nie eingebucht, sie
    - **Startup Command:** `gunicorn --bind=0.0.0.0 --timeout 600 "drop:create_app()"`
    - **SCM Basic Auth Publishing Credentials:** On, **HTTPS Only:** On → **Save**.
 
-Prüfen: Login mit dem GitHub-Benutzernamen klappt; nach **Restart** (Overview) ist man noch eingeloggt und die Links sind noch da.
+Prüfen: Login mit `Fynnius` klappt; nach **Restart** (Overview) ist man noch eingeloggt und die Links sind noch da.
 
 Die Werte stehen nirgends im Repository. HTTPS endet bei Azure am Load Balancer; die App erkennt das über `WEBSITE_HOSTNAME` und erzeugt trotzdem `https://`-Links (#34).
 
@@ -118,13 +121,13 @@ Eigenes Feature (von der Lehrperson erlaubt): **«Löschen nach dem Lesen»** f�
 3. Commits: zuerst der Test (`tests/test_burn.py`), dann Backend, dann Oberfläche
 4. Pull Request [#58](https://github.com/Fynnius/AuerbachWermelingerLB-324/pull/58) auf `dev` mit Beschreibung und Testnachweis; der Workflow «Tests» lief grün
 5. Merge per Rebase; **der Branch `feature/20-burn-after-read` bleibt bestehen**
-6. Auslieferung auf Azure mit dem nächsten Release `dev → main`
+6. Ausgeliefert auf Azure mit Release 0.3.0: Pull Request [#60](https://github.com/Fynnius/AuerbachWermelingerLB-324/pull/60) `dev → main`, danach lief der Workflow «Deploy» grün
 
 ## Arbeitsweise
 
 - **Branches:** Auf `main` liegt nur, was ausgeliefert ist; `dev` sammelt getestete Features; entwickelt wird auf `feature/<issue-nr>-<slug>` ab `dev`. Feature-Branches werden nicht gelöscht.
-- **Ablauf pro Änderung:** Issue → Branch ab `dev` → atomare Commits mit `#nr` → Pull Request auf `dev` → Tests grün → Merge per Rebase. `main` und `dev` sind geschützt; Änderungen gehen nur über Pull Requests.
-- **Release:** Pull Request `dev → main` (Merge-Commit) → Workflow «Deploy» → Tag nach Semantic Versioning (`0.2.0`, `0.3.0`).
+- **Ablauf pro Änderung:** Issue → Branch ab `dev` → atomare Commits mit `#nr` → Pull Request auf `dev` → Tests grün → Review durch den anderen → Merge per Rebase. `main` und `dev` sind geschützt; Änderungen gehen nur über Pull Requests.
+- **Release:** Pull Request `dev → main` (Merge-Commit) → Workflow «Deploy» → Tag und GitHub Release nach Semantic Versioning (`0.2.0`, `0.3.0`, `0.3.1`).
 
 ## KI-Nutzung
 
@@ -139,4 +142,4 @@ Die Commits sind unter unseren Git-Identitäten entstanden; Claude hat die Git-B
 
 ## Team
 
-Fynn Auerbach und Lionel Wermelinger, IM24c, Berufsfachschule BBB. Partnerarbeit: Commits von beiden, gemeinsam am selben Rechner und im selben Repository.
+Fynn Auerbach und Lionel Wermelinger, IM24c, Berufsfachschule BBB. Partnerarbeit: Commits von beiden, gemeinsam am selben Rechner und im selben Repository. Ab [#61](https://github.com/Fynnius/AuerbachWermelingerLB-324/issues/61) prüft der jeweils andere jeden Pull Request zusätzlich als Review auf GitHub.
