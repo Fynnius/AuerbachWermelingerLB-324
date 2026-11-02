@@ -1,0 +1,32 @@
+name: Bug
+description: Fehler melden
+title: "[Bug] "
+labels: ["type: bug", "status: new issue"]
+body:
+  - type: textarea
+    id: beschreibung
+    attributes:
+      label: Beschreibung
+      description: Was ist falsch?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduktion
+    attributes:
+      label: Schritte zum Reproduzieren
+      value: |
+        1.
+        2.
+    validations:
+      required: true
+  - type: textarea
+    id: erwartet
+    attributes:
+      label: Erwartetes Verhalten
+    validations:
+      required: true
+  - type: input
+    id: umgebung
+    attributes:
+      label: Umgebung
+      description: Browser, Betriebssystem, lokal oder Render.
