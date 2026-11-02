@@ -17,7 +17,8 @@ def create_app(config=None):
     if config:
         app.config.update(config)
 
-    from drop import main
+    from drop import auth, main
 
+    app.register_blueprint(auth.bp)
     app.register_blueprint(main.bp)
     return app

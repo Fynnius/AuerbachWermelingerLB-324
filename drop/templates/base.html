@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}drop{% endblock %}</title>
+</head>
+<body>
+  <header>
+    <a href="{{ url_for('main.index') }}">drop</a>
+    {% if session.get('logged_in') %}
+      <a href="{{ url_for('auth.logout') }}">Logout</a>
+    {% endif %}
+  </header>
+  <main>
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+      <p class="flash flash-{{ category }}">{{ message }}</p>
+    {% endfor %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
