@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Login – drop{% endblock %}
+{% block body_class %}page-login{% endblock %}
+{% block content %}
+  <div class="login">
+    <h1>Hier ist alles verschlossen.</h1>
+    <p class="lede">Mit dem Passwort kannst du Links kürzen, Drops erstellen und das Dashboard sehen. Wer nur einen Link geöffnet bekommt, braucht kein Passwort.</p>
+    <form class="login-form" method="post" action="{{ url_for('auth.login') }}">
+      <label for="password">Passwort</label>
+      <div class="inline-field">
+        <input type="password" id="password" name="password" required autofocus autocomplete="current-password">
+        <button type="submit" class="btn">Einloggen</button>
+      </div>
+    </form>
+  </div>
+{% endblock %}

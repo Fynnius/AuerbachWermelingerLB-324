@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Drop – drop{% endblock %}
+{% block content %}
+  {% if expired %}
+  <div class="envelope is-void">
+    <h1>Dieser Drop ist abgelaufen.</h1>
+    <p>Der Inhalt wurde gelöscht. Bitte die Person, die dir den Link geschickt hat, um einen neuen.</p>
+  </div>
+  {% else %}
+  <h1 class="visually-hidden">Drop</h1>
+  <div id="drop" class="envelope is-sealed" data-slug="{{ slug }}">
+    <div class="envelope-tint" aria-hidden="true"></div>
+    <p id="drop-status" class="envelope-status" role="status">Drop wird entschlüsselt …</p>
+    <p id="drop-error" class="flash flash-error" role="alert" hidden></p>
+    <pre id="drop-text" hidden></pre>
+  </div>
+  <noscript>
+    <p class="flash flash-error">Zum Entschlüsseln wird JavaScript benötigt.</p>
+  </noscript>
+
+  <script type="module" src="{{ url_for('static', filename='drop_view.js') }}"></script>
+  {% endif %}
+{% endblock %}

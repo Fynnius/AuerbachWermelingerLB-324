@@ -1,0 +1,6 @@
+[flake8]
+# Basis aus LA 1620, an black angepasst (Zeilenlänge 88, E203/W503 kollidieren mit black)
+max-line-length = 88
+max-complexity = 18
+extend-ignore = E203, W503
+exclude = .venv, .git, __pycache__, build, dist
