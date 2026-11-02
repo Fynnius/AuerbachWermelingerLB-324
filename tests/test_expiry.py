@@ -1,3 +1,4 @@
+import base64
 from datetime import datetime, timedelta
 
 import pytest
@@ -13,6 +14,8 @@ from drop.expiry import (
 from drop.models import Link, utcnow
 
 NOW = datetime(2026, 1, 1, 12, 0, 0)
+CIPHERTEXT = base64.b64encode(b"\x8f\x02encrypted-bytes\xfe").decode()
+IV = base64.b64encode(bytes(range(12))).decode()
 
 
 def test_choices_are_one_hour_one_day_seven_days():
@@ -191,3 +194,71 @@ def test_index_shows_expiry_state(app, client):
     # Kein QR-Bild für abgelaufene Links (die Route antwortet mit 410)
     assert "/gone01/qr" not in html
     assert "/later1/qr" in html
+
+
+# --- Drops -------------------------------------------------------------------
+
+
+def add_drop(app, slug="Ab3dE9", **fields):
+    return add_link(app, slug=slug, kind="text", ciphertext=CIPHERTEXT, iv=IV, **fields)
+
+
+@pytest.mark.parametrize("seconds", [3600, 86400, 604800])
+def test_create_drop_with_expiry_sets_expires_at(app, client, seconds):
+    login(client)
+    before = utcnow()
+
+    response = client.post(
+        "/drops", json={"ciphertext": CIPHERTEXT, "iv": IV, "expires_in": seconds}
+    )
+
+    assert response.status_code == 201
+    drop = load(app, response.get_json()["slug"])
+    assert before + timedelta(seconds=seconds) <= drop.expires_at
+    assert drop.expires_at <= utcnow() + timedelta(seconds=seconds)
+
+
+@pytest.mark.parametrize("extra", [{}, {"expires_in": None}])
+def test_create_drop_without_expiry_never_expires(app, client, extra):
+    login(client)
+
+    response = client.post("/drops", json={"ciphertext": CIPHERTEXT, "iv": IV, **extra})
+
+    assert response.status_code == 201
+    assert load(app, response.get_json()["slug"]).expires_at is None
+
+
+@pytest.mark.parametrize("value", [60, "abc", True, -3600, 3600.5])
+def test_create_drop_rejects_invalid_expiry(app, client, value):
+    login(client)
+
+    response = client.post(
+        "/drops", json={"ciphertext": CIPHERTEXT, "iv": IV, "expires_in": value}
+    )
+
+    assert response.status_code == 400
+    assert "expires_in" in response.get_json()["error"]
+    with app.app_context():
+        assert db.session.execute(db.select(Link)).first() is None
+
+
+def test_drop_works_before_expiry(app, client):
+    add_drop(app, expires_at=utcnow() + timedelta(hours=1))
+
+    assert client.get("/d/Ab3dE9").status_code == 200
+    assert client.get("/d/Ab3dE9/data").status_code == 200
+
+
+@pytest.mark.parametrize("path", ["/d/Ab3dE9", "/d/Ab3dE9/data"])
+def test_drop_with_one_hour_expiry_is_gone_after_two_hours(app, client, path):
+    # Given: a drop with expiry 1 hour, created 2 hours ago
+    created = utcnow() - timedelta(hours=2)
+    add_drop(app, created_at=created, expires_at=created + timedelta(hours=1))
+
+    # When: I fetch it now
+    response = client.get(path)
+
+    # Then: 410 Gone, no data and no click
+    assert response.status_code == 410
+    assert CIPHERTEXT.encode() not in response.data
+    assert load(app, "Ab3dE9").clicks == 0

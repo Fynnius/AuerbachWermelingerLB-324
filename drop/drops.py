@@ -22,6 +22,7 @@ from flask import (
 
 from drop.auth import login_required
 from drop.database import db
+from drop.expiry import abort_if_expired, expires_at_from, parse_expires_in
 from drop.models import Link
 
 bp = Blueprint("drops", __name__)
@@ -30,7 +31,7 @@ SLUG_ALPHABET = string.ascii_letters + string.digits
 SLUG_LENGTH = 6
 IV_BYTES = 12
 MAX_CIPHERTEXT_BYTES = 64 * 1024
-ALLOWED_FIELDS = {"ciphertext", "iv"}
+ALLOWED_FIELDS = {"ciphertext", "iv", "expires_in"}
 
 
 def login_required_json(view):
@@ -110,7 +111,18 @@ def create():
     if len(raw_iv) != IV_BYTES:
         return bad_request(f"iv must be {IV_BYTES} bytes")
 
-    drop = Link(slug=new_slug(), kind="text", ciphertext=ciphertext, iv=data["iv"])
+    try:
+        expires_in = parse_expires_in(data.get("expires_in"))
+    except ValueError:
+        return bad_request("expires_in must be 3600, 86400, 604800 or null")
+
+    drop = Link(
+        slug=new_slug(),
+        kind="text",
+        ciphertext=ciphertext,
+        iv=data["iv"],
+        expires_at=expires_at_from(expires_in),
+    )
     db.session.add(drop)
     db.session.commit()
     return (
@@ -124,12 +136,14 @@ def create():
 @bp.get("/d/<slug>")
 def view(slug):
     drop = get_text_drop(slug)
+    abort_if_expired(drop)
     return render_template("drop_view.html", slug=drop.slug)
 
 
 @bp.get("/d/<slug>/data")
 def data(slug):
     drop = get_text_drop(slug)
+    abort_if_expired(drop)
     drop.clicks += 1
     db.session.commit()
     return jsonify(ciphertext=drop.ciphertext, iv=drop.iv)
