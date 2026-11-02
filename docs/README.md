@@ -2,11 +2,11 @@
 
 **Team:** Fynn Auerbach, Lionel Wermelinger (IM24c)
 **Modul:** 324 DevOps, Leistungsbeurteilung (Partnerarbeit)
-**Status:** Umgesetzt und auf Azure ausgeliefert (Release 0.3.0), Stand 02.11.2026. Dieses Dokument ist die ursprüngliche Projektidee; was davon umgesetzt ist, steht unter «Umfang». Die Bedienung und die LB-Aufgaben beschreibt die [readme.md](../readme.md).
+**Status:** umgesetzt und ausgeliefert (Release 0.3.2). Bedienung und LB-Aufgaben: [readme.md](../readme.md).
 
 ## Idee in einem Satz
 
-drop ist ein privater Dienst, den wir selbst auf Azure App Service betreiben: Er macht aus Links, Texten und Dateien einen Kurzlink, verschlüsselt geteilte Inhalte schon im Browser und zeigt live, wann ein Link geöffnet wurde.
+drop ist ein privater Dienst, den wir selbst auf Azure App Service betreiben: Er macht aus Links und Texten einen Kurzlink, verschlüsselt geteilte Texte schon im Browser und zeigt, wann ein Link geöffnet wurde.
 
 ## Warum
 
@@ -20,10 +20,10 @@ drop ist ein privater Dienst, den wir selbst auf Azure App Service betreiben: Er
 - Aus einer langen URL wird `…/x7k2Qa`. Wer den Kurzlink öffnet, wird weitergeleitet.
 - Zu jedem Link gibt es einen QR-Code.
 
-### Verschlüsselter Drop (Text, später auch Dateien)
+### Verschlüsselter Text-Drop
 - Der Browser verschlüsselt den Inhalt mit der Web Crypto API (AES-GCM).
 - Der Schlüssel steht nur im `#`-Teil des Links. Dieser Teil wird nie an den Server geschickt.
-- **Der Server speichert also nur Datensalat.** Weder wir noch Azure können den Inhalt lesen.
+- **Der Server speichert also nur verschlüsselte Daten.** Weder wir noch Azure können den Inhalt lesen.
 - Optionen pro Drop:
   - Ablaufzeit: 1 Stunde, 1 Tag oder 7 Tage
   - Löschen nach dem ersten Öffnen («burn after reading»)
@@ -31,7 +31,7 @@ drop ist ein privater Dienst, den wir selbst auf Azure App Service betreiben: Er
 ### Dashboard
 - Pro Link sehen wir, wie oft und wann er geöffnet wurde und über welchen Gerätetyp, als 7-Tage-Verlauf (umgesetzt).
 - Geplant, aber im Backlog: Länder-Statistik und Weltkarte (#31) sowie Live-Updates ohne Neuladen per Server-Sent Events (#29).
-- **Das Dashboard weiss, *dass* etwas geöffnet wurde, aber nie, *was* drin ist.** Diese Trennung zeigen wir in der Präsentation.
+- **Das Dashboard weiss, *dass* etwas geöffnet wurde, aber nie, *was* drin ist.**
 
 ### Zugriff
 - Erstellen und Dashboard sind durch das `PASSWORD` aus der `.env` geschützt (Vorgabe der LB).
@@ -52,11 +52,7 @@ drop ist ein privater Dienst, den wir selbst auf Azure App Service betreiben: Er
 
 ## Hosting: Azure App Service
 
-**Entscheid (2026-11-02):** drop läuft auf **Azure App Service** im Azure-for-Students-Abo von Lionel.
-
-**Verlauf:**
-- Fynns eigenes Azure-for-Students-Abo ist abgelaufen; der IT-Helpdesk der BBB hat am 28.08.2026 bestätigt, dass es nicht reaktiviert werden kann. Deshalb war zwischenzeitlich Render geplant (von der Lehrperson erlaubt).
-- Lionels Abo funktioniert. Am 2026-11-02 hat das Team eine Web App von Hand eingerichtet und den aktuellen Stand erfolgreich getestet (Login, Kurzlinks, QR, Drops, Dashboard, Neustart). Damit ist Azure wie im Modul (LA 1600, 1651) wieder die Plattform; Render ist verworfen.
+drop läuft auf **Azure App Service** im Azure-for-Students-Abo von Lionel.
 
 **Einrichtung:** Schritt für Schritt in der readme.md, Abschnitt «Aufgabe 4» (App Settings, Startbefehl, Publish-Profil).
 
@@ -93,29 +89,16 @@ Bewertet wird der Umgang mit den CI/CD-Werkzeugen, nicht der Umfang der App. So 
 | 4-1 | drop läuft auf Azure App Service, die URL steht in der readme.md |
 | 4-2 | `PASSWORD` (= GitHub-Username) und `SECRET_KEY` als App Settings auf Azure, Schritte in der readme.md. Das Publish-Profil liegt als GitHub-Secret im Repo. |
 | 4-3 | GitHub Action `deploy.yml`: bei jedem Merge auf `main` zuerst pytest, dann Auslieferung mit `azure/webapps-deploy`. Continuous Deployment im Azure-Portal ist aus, damit die Auslieferung sichtbar über unseren Workflow läuft. |
-| 5-1 | Eigenes Feature mit eigenem Test über den GitHub Flow (von der Lehrperson erlaubt), z. B. «Löschen nach dem Lesen». Den Branch danach **nicht löschen**. |
+| 5-1 | Eigenes Feature «Löschen nach dem Lesen» mit eigenem Test über den GitHub Flow (von der Lehrperson erlaubt): Issue #20, PR #58, Release 0.3.0. Der Branch bleibt bestehen. |
 
 ### Branch-Modell (Vorgabe LB)
 - `main`: nur was ausgeliefert wird. Ausgelieferte Version = `main`.
 - `dev`: abgeschlossene und getestete Features.
 - `feature/…`: eine Aufgabe pro Branch, immer ab `dev`.
 
-Ablauf: Issue → `feature/…` ab `dev` → PR auf `dev` (Tests laufen) → Review durch den anderen → zum Ausliefern PR von `dev` auf `main`. Bis Release 0.3.0 haben wir die Pull Requests gemeinsam am selben Rechner angeschaut; ab #61 läuft das Review zusätzlich auf GitHub.
+Ablauf: Issue → `feature/…` ab `dev` → PR auf `dev` (Tests laufen) → Review durch den anderen → zum Ausliefern PR von `dev` auf `main`.
 
 ## Zusammenarbeit
 
 - Ein gemeinsames Repo: Besitzer `Fynnius`, Collaborator `l-wermelinger`. `main` und `dev` sind geschützt.
-- Jede Aufgabe ist ein Issue mit Assignee. Der andere liest den Diff vor dem Merge.
-- **Aufteilung nach Dateien**, damit es nicht wieder zu Konflikten wie in LA 1632 kommt. Ursprünglicher Vorschlag (tatsächlich haben wir gemeinsam am selben Rechner gearbeitet, siehe unten):
-  - Person A: Backend, Datenbank, Verschlüsselungs-Logik, Tests
-  - Person B: Frontend, Dashboard, QR-Code, Live-Updates
-  - Gemeinsam: pre-commit, Workflows, Azure, readme.md
-- KI-Regeln aus unserer Präsentation gelten weiter: Wer KI-Code einbucht, muss ihn erklären können, und Secrets (`.env`, `SECRET_KEY`, Publish-Profil) kommen nie in einen Prompt.
-
-## Entscheide (früher «Noch offen»)
-
-- [x] Repo-Name: `AuerbachWermelingerLB-324`
-- [x] Repo-Besitzer `Fynnius`, Collaborator `l-wermelinger`
-- [x] Aufteilung: Wir haben gemeinsam am selben Rechner gearbeitet; Commits von beiden
-- [x] Azure Web App `drop-auerbachwermelinger`, URL in der readme unter «Aufgabe 4»
-- [x] Feature für Kriterium 5-1: «Löschen nach dem Lesen» (#20, PR #58)
+- Jede Aufgabe ist ein Issue mit Assignee.
