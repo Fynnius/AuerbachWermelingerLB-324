@@ -66,7 +66,9 @@ def test_page_of_a_burnt_drop_is_404(client):
     slug = create(client, burn_after_read=True)
     client.get(f"/d/{slug}/data")
 
-    assert client.get(f"/d/{slug}").status_code == 404
+    page = client.get(f"/d/{slug}")
+    assert page.status_code == 404
+    assert "Diesen Drop gibt es nicht (mehr)." in page.get_data(as_text=True)
 
 
 def test_normal_drop_can_be_read_several_times(app, client):
@@ -100,3 +102,22 @@ def test_dashboard_still_counts_a_burnt_drop_without_content(client):
     entry = next(e for e in entries if e["slug"] == slug)
     assert entry["clicks"] == 1
     assert "ciphertext" not in entry
+
+
+def test_new_drop_page_offers_burn_after_reading(client):
+    login(client)
+
+    page = client.get("/drops/new").get_data(as_text=True)
+
+    assert 'id="drop-burn"' in page
+    assert "Nach dem ersten Lesen löschen" in page
+
+
+@pytest.mark.parametrize("burn, expected", [(True, "true"), (False, "false")])
+def test_view_page_tells_the_script_whether_the_drop_burns(client, burn, expected):
+    login(client)
+    slug = create(client, burn_after_read=burn)
+
+    page = client.get(f"/d/{slug}").get_data(as_text=True)
+
+    assert f'data-burn="{expected}"' in page

@@ -6,13 +6,19 @@
     <h1>Dieser Drop ist abgelaufen.</h1>
     <p>Der Inhalt wurde gelöscht. Bitte die Person, die dir den Link geschickt hat, um einen neuen.</p>
   </div>
+  {% elif missing %}
+  <div class="envelope is-void">
+    <h1>Diesen Drop gibt es nicht (mehr).</h1>
+    <p>Entweder ist der Link falsch, oder es war ein Einmal-Drop, der schon geöffnet und danach gelöscht wurde.</p>
+  </div>
   {% else %}
   <h1 class="visually-hidden">Drop</h1>
-  <div id="drop" class="envelope is-sealed" data-slug="{{ slug }}">
+  <div id="drop" class="envelope is-sealed" data-slug="{{ slug }}" data-burn="{{ 'true' if burn_after_read else 'false' }}">
     <div class="envelope-tint" aria-hidden="true"></div>
     <p id="drop-status" class="envelope-status" role="status">Drop wird entschlüsselt …</p>
     <p id="drop-error" class="flash flash-error" role="alert" hidden></p>
     <pre id="drop-text" hidden></pre>
+    <p id="drop-burnt" class="note" hidden>Dieser Drop wurde soeben vom Server gelöscht. Kopiere den Text jetzt, falls du ihn noch brauchst.</p>
   </div>
   <noscript>
     <p class="flash flash-error">Zum Entschlüsseln wird JavaScript benötigt.</p>
