@@ -6,7 +6,7 @@
 
 ## Idee in einem Satz
 
-drop ist ein privater Dienst, den wir selbst auf Render betreiben: Er macht aus Links, Texten und Dateien einen Kurzlink, verschlüsselt geteilte Inhalte schon im Browser und zeigt live, wann ein Link geöffnet wurde.
+drop ist ein privater Dienst, den wir selbst auf Azure App Service betreiben: Er macht aus Links, Texten und Dateien einen Kurzlink, verschlüsselt geteilte Inhalte schon im Browser und zeigt live, wann ein Link geöffnet wurde.
 
 ## Warum
 
@@ -23,7 +23,7 @@ drop ist ein privater Dienst, den wir selbst auf Render betreiben: Er macht aus 
 ### Verschlüsselter Drop (Text, später auch Dateien)
 - Der Browser verschlüsselt den Inhalt mit der Web Crypto API (AES-GCM).
 - Der Schlüssel steht nur im `#`-Teil des Links. Dieser Teil wird nie an den Server geschickt.
-- **Der Server speichert also nur Datensalat.** Weder wir noch Render können den Inhalt lesen.
+- **Der Server speichert also nur Datensalat.** Weder wir noch Azure können den Inhalt lesen.
 - Optionen pro Drop:
   - Ablaufzeit: 1 Stunde, 1 Tag oder 7 Tage
   - Löschen nach dem ersten Öffnen («burn after reading»)
@@ -42,35 +42,25 @@ drop ist ein privater Dienst, den wir selbst auf Render betreiben: Er macht aus 
 | Teil | Wahl | Begründung |
 |---|---|---|
 | Backend | Python / Flask | Wie im Modul, damit unsere CI/CD-Vorlagen passen |
-| Datenbank | SQLite, später evtl. Postgres bei Neon | Für das MVP reicht SQLite. Auf Render geht die Datei bei jeder Auslieferung verloren (siehe Hosting) |
+| Datenbank | SQLite unter `/home` auf Azure | `/home` überlebt Neustarts und Auslieferungen; für unseren Umfang reicht SQLite |
 | Verschlüsselung | Web Crypto API im Browser | Keine Bibliothek nötig, der Server sieht nie Klartext |
 | Live-Updates | Server-Sent Events | Einfacher als WebSockets, läuft mit Flask |
 | QR-Code | Python-Paket `qrcode` | |
 | Tests | pytest | |
 | Formatierung / Linting | black, flake8 via pre-commit | |
-| Auslieferung | Render (Web Service) via GitHub Action und Deploy Hook | Azure ist nicht verfügbar (siehe Hosting) |
+| Auslieferung | Azure App Service (Linux, F1) via GitHub Action und Publish-Profil | Wie im Modul (LA 1600, 1651); siehe Hosting |
 
-## Hosting: Render statt Azure
+## Hosting: Azure App Service
 
-**Entscheid:** Wir liefern drop auf [Render](https://render.com) aus, nicht auf Azure.
+**Entscheid (2026-11-02):** drop läuft auf **Azure App Service** im Azure-for-Students-Abo von Lionel.
 
-**Warum:**
-- Fynns Azure-for-Students-Abo ist abgelaufen. Der IT-Helpdesk der BBB hat am 28.08.2026 bestätigt, dass es wegen der Regelung der Bildungsinstitution nicht neu aktiviert werden kann.
-- Die Lehrperson hat erlaubt, eine andere Plattform zu verwenden.
-- Render ist gratis, braucht keine Kreditkarte, und man meldet sich mit dem GitHub-Konto an.
+**Verlauf:**
+- Fynns eigenes Azure-for-Students-Abo ist abgelaufen; der IT-Helpdesk der BBB hat am 28.08.2026 bestätigt, dass es nicht reaktiviert werden kann. Deshalb war zwischenzeitlich Render geplant (von der Lehrperson erlaubt).
+- Lionels Abo funktioniert. Am 2026-11-02 hat das Team eine Web App von Hand eingerichtet und den aktuellen Stand erfolgreich getestet (Login, Kurzlinks, QR, Drops, Dashboard, Neustart). Damit ist Azure wie im Modul (LA 1600, 1651) wieder die Plattform; Render ist verworfen.
 
-**So setzen wir es auf:**
-1. Auf Render einen *Web Service* aus dem GitHub-Repo erstellen, Branch `main`, Plan *Free*.
-2. Build-Befehl: `pip install -r requirements.txt`
-3. Start-Befehl: `gunicorn app:app`
-4. Unter *Environment* `PASSWORD` setzen (Wert = GitHub-Username, Vorgabe LB).
-5. *Auto-Deploy* ausschalten und unter *Settings* die *Deploy Hook*-URL kopieren.
-6. Diese URL im GitHub-Repo als Secret `RENDER_DEPLOY_HOOK` speichern.
-7. Workflow `.github/workflows/deploy.yml`: bei jedem push auf `main` die Hook-URL aufrufen (`curl -X POST`).
+**Einrichtung:** Schritt für Schritt in der readme.md, Abschnitt «Aufgabe 4» (App Settings, Startbefehl, Publish-Profil).
 
-**Einschränkungen des Gratis-Plans:**
-- Die App schläft nach etwa 15 Minuten ohne Besucher. Der erste Aufruf danach dauert rund 30 Sekunden.
-- Die Festplatte ist nicht dauerhaft: Bei jeder Auslieferung geht die SQLite-Datei verloren. Für die LB und die Demo ist das in Ordnung. Wenn Daten bleiben sollen, wechseln wir auf eine Gratis-Postgres-Datenbank bei Neon; deren Verbindungs-URL wird dann ein zweites Secret.
+**Einschränkungen des Tarifs Free F1:** 60 CPU-Minuten pro Tag, kein «Always On» (erster Aufruf nach Leerlauf dauert einige Sekunden), keine Deployment Slots.
 
 ## Umfang
 
@@ -100,9 +90,9 @@ Bewertet wird der Umgang mit den CI/CD-Werkzeugen, nicht der Umfang der App. So 
 | 2-2 | pre-commit testet bei jedem **push** (pytest, `stages: [pre-push]`) |
 | 2-3 | readme.md erklärt die Installation, inklusive `pre-commit install --hook-type pre-push` |
 | 3-1 | GitHub Action: pytest bei jedem Pull Request auf `dev`, **sonst nichts** |
-| 4-1 | drop läuft auf Render, die URL steht in der readme.md |
-| 4-2 | `PASSWORD` (= GitHub-Username) als Environment Variable auf Render, Schritte in der readme.md. Die Deploy-Hook-URL liegt als GitHub-Secret im Repo. |
-| 4-3 | GitHub Action: ruft bei jedem merge auf `main` den Deploy Hook von Render auf. Auto-Deploy in Render ist ausgeschaltet, damit die Auslieferung sichtbar über unseren Workflow läuft. |
+| 4-1 | drop läuft auf Azure App Service, die URL steht in der readme.md |
+| 4-2 | `PASSWORD` (= GitHub-Username) und `SECRET_KEY` als App Settings auf Azure, Schritte in der readme.md. Das Publish-Profil liegt als GitHub-Secret im Repo. |
+| 4-3 | GitHub Action `deploy.yml`: bei jedem Merge auf `main` zuerst pytest, dann Auslieferung mit `azure/webapps-deploy`. Continuous Deployment im Azure-Portal ist aus, damit die Auslieferung sichtbar über unseren Workflow läuft. |
 | 5-1 | Eigenes Feature mit eigenem Test über den GitHub Flow (von der Lehrperson erlaubt), z. B. «Löschen nach dem Lesen». Den Branch danach **nicht löschen**. |
 
 ### Branch-Modell (Vorgabe LB)
@@ -119,7 +109,7 @@ Ablauf: Issue → `feature/…` ab `dev` → PR auf `dev` (Tests laufen) → Rev
 - **Aufteilung nach Dateien**, damit es nicht wieder zu Konflikten wie in LA 1632 kommt. Vorschlag:
   - Person A: Backend, Datenbank, Verschlüsselungs-Logik, Tests
   - Person B: Frontend, Dashboard, QR-Code, Live-Updates
-  - Gemeinsam: pre-commit, Workflows, Render, readme.md
+  - Gemeinsam: pre-commit, Workflows, Azure, readme.md
 - PRs früh als Draft öffnen.
 - KI-Regeln aus unserer Präsentation gelten weiter: Wer KI-Code einbucht, muss ihn erklären können, und Secrets (`.env`, Deploy-Hook-URL) kommen nie in einen Prompt.
 
@@ -128,5 +118,5 @@ Ablauf: Issue → `feature/…` ab `dev` → PR auf `dev` (Tests laufen) → Rev
 - [x] Repo-Name: `AuerbachWermelingerLB-324`
 - [ ] Wem gehört das Repo, wer ist Collaborator?
 - [ ] Wer übernimmt Person A, wer Person B?
-- [ ] Name des Render-Services (bestimmt die URL `<name>.onrender.com`)
+- [ ] Name und URL der Azure Web App in readme «Aufgabe 4» eintragen
 - [ ] Welches Feature genau für Kriterium 5-1?
