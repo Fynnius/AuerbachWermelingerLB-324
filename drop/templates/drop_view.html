@@ -2,5 +2,14 @@
 {% block title %}Drop · drop{% endblock %}
 {% block content %}
   <h1>Drop</h1>
-  <div id="drop" data-slug="{{ slug }}"></div>
+  <div id="drop" class="card" data-slug="{{ slug }}">
+    <p id="drop-status" class="muted" role="status">Drop wird entschlüsselt …</p>
+    <p id="drop-error" class="flash flash-error" role="alert" hidden></p>
+    <pre id="drop-text" hidden></pre>
+  </div>
+  <noscript>
+    <p class="flash flash-error">Zum Entschlüsseln wird JavaScript benötigt.</p>
+  </noscript>
+
+  <script type="module" src="{{ url_for('static', filename='drop_view.js') }}"></script>
 {% endblock %}
