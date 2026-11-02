@@ -2,7 +2,7 @@
 
 from collections import defaultdict
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, render_template, request
 
 from drop.auth import login_required
 from drop.database import db
@@ -40,6 +40,13 @@ def record_visit(link):
 def iso_utc(moment):
     """ISO 8601 mit "Z", damit der Browser die Zeit als UTC versteht."""
     return moment.isoformat(timespec="seconds") + "Z"
+
+
+@bp.get("/dashboard")
+@login_required
+def dashboard():
+    """Seite mit Klicks pro Link; die Daten lädt dashboard.js per fetch."""
+    return render_template("dashboard.html")
 
 
 @bp.get("/dashboard/data")

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · drop{% endblock %}
+{% block content %}
+  <h1>Dashboard</h1>
+
+  <section class="card">
+    <h2>Besuche der letzten 7 Tage</h2>
+    <div id="dashboard-chart" class="dashboard-chart"></div>
+  </section>
+
+  <section class="card">
+    <h2>Geräte</h2>
+    <ul id="dashboard-devices" class="device-list"></ul>
+  </section>
+
+  <section class="card">
+    <h2>Klicks pro Link</h2>
+    <div class="table-wrap">
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th scope="col">Slug</th>
+            <th scope="col">Art</th>
+            <th scope="col">Ziel</th>
+            <th scope="col" class="num">Klicks</th>
+          </tr>
+        </thead>
+        <tbody id="dashboard-links"></tbody>
+      </table>
+    </div>
+  </section>
+{% endblock %}
