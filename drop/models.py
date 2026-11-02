@@ -33,3 +33,18 @@ class Link(db.Model):
 
     def is_expired(self, now=None):
         return self.expires_at is not None and (now or utcnow()) >= self.expires_at
+
+
+class Visit(db.Model):
+    """Ein Aufruf eines Links oder Drops.
+
+    Bewusst ohne IP-Adresse und ohne vollständigen User-Agent: gespeichert wird
+    nur der grobe Gerätetyp ("mobile", "desktop", "bot" oder "other").
+    """
+
+    id = db.Column(db.Integer, primary_key=True)
+    link_id = db.Column(
+        db.Integer, db.ForeignKey("link.id"), nullable=False, index=True
+    )
+    at = db.Column(db.DateTime, nullable=False, default=utcnow)
+    device = db.Column(db.String(8), nullable=False)
