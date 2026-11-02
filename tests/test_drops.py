@@ -119,7 +119,7 @@ def test_create_rejects_plaintext_field(app, client):
 @pytest.mark.parametrize(
     "payload",
     [
-        {"ciphertext": CIPHERTEXT, "iv": IV, "burn_after_read": True},
+        {"ciphertext": CIPHERTEXT, "iv": IV, "note": "unknown"},
         {"ciphertext": CIPHERTEXT},
         {"iv": IV},
         {"ciphertext": "", "iv": IV},
