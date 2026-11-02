@@ -18,6 +18,7 @@ from drop.expiry import (
     parse_expires_in,
 )
 from drop.models import Link
+from drop.stats import record_visit
 
 bp = Blueprint("links", __name__)
 
@@ -88,6 +89,7 @@ def create():
 def follow(slug):
     link = get_url_link_or_404(slug)
     abort_if_expired(link)
+    record_visit(link)
     link.clicks += 1
     db.session.commit()
     return redirect(link.target, code=302)

@@ -24,6 +24,7 @@ from drop.auth import login_required
 from drop.database import db
 from drop.expiry import abort_if_expired, expires_at_from, parse_expires_in
 from drop.models import Link
+from drop.stats import record_visit
 
 bp = Blueprint("drops", __name__)
 
@@ -152,6 +153,7 @@ def view(slug):
 def data(slug):
     drop = get_text_drop(slug)
     abort_if_expired(drop)
+    record_visit(drop)
     drop.clicks += 1
     db.session.commit()
     return jsonify(ciphertext=drop.ciphertext, iv=drop.iv)
