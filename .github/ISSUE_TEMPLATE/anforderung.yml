@@ -1,0 +1,91 @@
+name: Anforderung
+description: Neue Anforderung im Format Zielsystem + Priorität + Systemaktivität + Ergänzungen + Funktionalität + Bedingungen
+title: "[ITEM] drop muss/soll/wird …"
+labels: ["status: new issue"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Beispiel: *Reflect Media Player* (Zielsystem) **muss** (Priorität) *dem Benutzer die Möglichkeit bieten* (Systemaktivität),
+        J3D Szenengraphen aus einer wrml-Datei über das Netzwerk (Ergänzung) zu laden (Funktionalität), *falls der Benutzer eingeschrieben ist* (Bedingung).
+
+        Den Typ (Funktionale Anforderung, Qualitätsanforderung, Randanforderung) bitte **manuell** als Label setzen.
+  - type: input
+    id: anforderung
+    attributes:
+      label: Anforderung
+      description: Der ganze Satz, zusammengesetzt aus den Feldern unten.
+    validations:
+      required: true
+  - type: input
+    id: zielsystem
+    attributes:
+      label: Zielsystem
+      description: Betroffenes (Teil-)System, z. B. drop, drop-Dashboard, Auslieferung.
+      value: drop
+    validations:
+      required: true
+  - type: dropdown
+    id: prioritaet
+    attributes:
+      label: Priorität
+      options:
+        - muss (hoch)
+        - soll (mittel)
+        - wird (niedrig)
+    validations:
+      required: true
+  - type: dropdown
+    id: systemaktivitaet
+    attributes:
+      label: Systemaktivität
+      options:
+        - selbständig (System handelt selbst)
+        - dem Benutzer die Möglichkeit bieten (Benutzerfunktion)
+        - fähig sein (Schnittstelle)
+    validations:
+      required: true
+  - type: input
+    id: ergaenzungen
+    attributes:
+      label: Ergänzungen
+      description: Optional, z. B. über welchen Weg oder in welchem Format.
+  - type: input
+    id: funktionalitaet
+    attributes:
+      label: Funktionalität
+      description: Was das System tun soll.
+    validations:
+      required: true
+  - type: input
+    id: bedingungen
+    attributes:
+      label: Bedingungen
+      description: Zeitlich mit «wenn», logisch mit «falls».
+  - type: textarea
+    id: akzeptanzkriterien
+    attributes:
+      label: Akzeptanzkriterien
+      description: Werden zu Testfällen (pytest).
+      value: |
+        | Given | When | Then |
+        |---|---|---|
+        |  |  |  |
+    validations:
+      required: true
+  - type: textarea
+    id: teilaufgaben
+    attributes:
+      label: Teilaufgaben
+      value: |
+        - [ ]
+  - type: textarea
+    id: schnittstelle
+    attributes:
+      label: Schnittstelle
+      description: Routen, Endpoint-Namen, Template-Variablen, JSON-Felder, die andere Teile verwenden.
+  - type: textarea
+    id: weitere
+    attributes:
+      label: Weitere Informationen
+      description: Item-ID, Abhängigkeiten (#nr), betroffene Dateien, Quelle.
