@@ -1,3 +1,7 @@
+from drop.database import db
+from drop.models import Link
+
+
 def test_index_redirects_to_login_when_logged_out(client):
     response = client.get("/")
 
@@ -39,3 +43,17 @@ def test_index_lists_newest_link_first(client):
     html = client.get("/").get_data(as_text=True)
 
     assert html.index("https://second.example") < html.index("https://first.example")
+
+
+def test_index_shows_qr_code_for_link(app, client):
+    # Given: a created link
+    client.post("/login", data={"password": "test"})
+    client.post("/links", data={"url": "https://example.com"})
+    with app.app_context():
+        slug = db.session.execute(db.select(Link.slug)).scalar_one()
+
+    # When: I open the start page
+    html = client.get("/").get_data(as_text=True)
+
+    # Then: I see its QR code
+    assert f'class="qr" src="/{slug}/qr"' in html
